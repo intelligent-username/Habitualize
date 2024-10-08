@@ -14,7 +14,7 @@ This is a simple yet powerful habit tracker, designed to help users manage and t
 
 ### Backend (Flask) Setup
 
-#### Navigate to the `backend` folder and install the required dependencies:
+#### Navigate to the `backend` folder and install the required dependencies
 
 ```bash
    pip install -r requirements.txt
