@@ -1,0 +1,33 @@
+.App {
+    text-align: center;
+    margin: 20px;
+  }
+  
+  .add-habit input {
+    padding: 10px;
+    font-size: 16px;
+  }
+  
+  .add-habit button {
+    padding: 10px 20px;
+    margin-left: 10px;
+  }
+  
+  .habits-list {
+    margin-top: 20px;
+  }
+  
+  .habit {
+    margin-bottom: 10px;
+  }
+  
+  .habit span.completed {
+    text-decoration: line-through;
+    color: green;
+  }
+  
+  .habit button {
+    margin-left: 10px;
+    padding: 5px 10px;
+  }
+  
