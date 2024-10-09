@@ -1,8 +1,9 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import sqlite3
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend/build')
 CORS(app)  # Enable CORS to allow requests from React frontend
 
 # Initialize the SQLite database
@@ -50,6 +51,15 @@ def delete_habit(habit_id):
     conn.commit()
     conn.close()
     return jsonify({"message": "Habit deleted successfully"}), 200
+
+# Serve the React frontend
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     init_db()

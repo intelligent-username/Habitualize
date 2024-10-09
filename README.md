@@ -23,16 +23,18 @@ This is a simple yet powerful habit tracker, designed to help users manage and t
 #### Run the Flask server
 
 ```bash
-        python app.py
+    python app.py
 ```
 
 The backend will now be running on [127.0.0.1:500](http://127.0.0.1:5000).
 
 --
 
+Ensure the terminal you're in is in the backend folder location.
+
 ### Frontend (ReactJS) Setup
 
-Navigate to the frontend folder and install the necessary dependencies:
+On a SEPARATE terminal, Navigate to the **frontend folder** and install the necessary dependencies:
 
 ```bash
     npm install
@@ -41,10 +43,14 @@ Navigate to the frontend folder and install the necessary dependencies:
 Start the React development server:
 
 ```bash
-npm start
+    npm start
 ```
 
-The frontend will now be running on [localhost:3000](http://localhost:3000).
+Ensure the terminal you're in is in the frontend folder location.
+
+- Run these in different terminals
+
+The frontend will now be running on http://[localhost:3000](http://localhost:3000).
 
 Features (In Progress):
 
