@@ -1,65 +1,214 @@
-from flask import Flask, jsonify, request, send_from_directory
+# I really have to rebuild this from scrath, after all that.
+# Lesson learnt: sync to Github more frequently next time.
+
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import sqlite3
 import os
+import datetime
 
-app = Flask(__name__, static_folder='../frontend/build')
-CORS(app)  # Enable CORS to allow requests from React frontend
+app = Flask(__name__)
+CORS(app)  # For frontend-backend communication
 
-# Initialize the SQLite database
+# Database Initializer
 def init_db():
+    """
+    Initialize the SQLite database and creates tables if they do not exist.
+    The database is 'habits.db' and is created in the same directory as this script.
+
+    Thhe database contains two tables:
+    - habits: stores habit information
+        - id: INTEGER PRIMARY KEY
+        - name: TEXT NOT NULL
+        - date_created: TEXT NOT NULL
+
+    - habit_history: stores habit completion history
+        - id: INTEGER PRIMARY KEY
+        - habit_id: INTEGER NOT NULL
+        - date: TEXT NOT NULL
+        - completed: INTEGER NOT NULL
+    """
     conn = sqlite3.connect('habits.db')
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS habits
-                 (id INTEGER PRIMARY KEY, name TEXT, completed INTEGER)''')
+    # habits table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS habits (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            date_created TEXT NOT NULL,
+            color TEXT DEFAULT 'gray'
+        )
+    ''')
+    # habit_history table
+    c.execute('''
+              CREATE TABLE IF NOT EXISTS habit_history (
+                    id INTEGER PRIMARY KEY,
+                    habit_id INTEGER NOT NULL,
+                    date TEXT NOT NULL,
+                    completed INTEGER NOT NULL,
+                    FOREIGN KEY (habit_id) REFERENCES habits (id)
+                )
+              ''')
     conn.commit()
     conn.close()
 
+# Fetch habits
 @app.route('/habits', methods=['GET'])
 def get_habits():
-    conn = sqlite3.connect('habits.db')
-    c = conn.cursor()
-    c.execute("SELECT * FROM habits")
-    habits = [{"id": row[0], "name": row[1], "completed": row[2]} for row in c.fetchall()]
-    conn.close()
-    return jsonify(habits)
+    """
+    Fetch all habits from the database and their completion status for today.
+    If an errors occurs when retrieving the habits, throw a 500 error.
+    """
+    try:
+        conn = sqlite3.connect('habits.db')
+        c = conn.cursor()
+        today = datetime.date.today().isoformat()
+        c.execute("SELECT id, name, date_created, color FROM habits")
+        habits = []
+        for row in c.fetchall():
+            habit_id, name, date_created, color = row
+            # Check if completed for today
+            c.execute(
+                "SELECT completed FROM habit_history WHERE habit_id = ? AND date = ?", 
+                (habit_id, today)
+            )
+            result = c.fetchone()
+            completed = bool(result[0]) if result else False
+            habits.append({
+                "id": habit_id,
+                "name": name,
+                "date_created": date_created,
+                "color": color,
+                "completed": completed
+            })
+        conn.close()
+        return jsonify(habits)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
+# Add a new habit
 @app.route('/habits', methods=['POST'])
 def add_habit():
-    habit = request.json.get('name')
-    conn = sqlite3.connect('habits.db')
-    c = conn.cursor()
-    c.execute("INSERT INTO habits (name, completed) VALUES (?, ?)", (habit, 0))
-    conn.commit()
-    conn.close()
-    return jsonify({"message": "Habit added successfully"}), 201
+    """
+    Creates a new habit, adding it to the database.
+    If the request does not contain a name, return a 400 error.
+    If an error occurs when adding the habit, return a 500 error.
+    The request must be a JSON object containing the following:
+    - name: the name of the habit (required)
+    """
+    try:
+        data = request.json
+        name = data.get('name')
+        color = data.get('color', 'gray')
+        if not name:
+            return jsonify({"error": "Habit name is required"}), 400
+        date_created = datetime.date.today().isoformat()
+        conn = sqlite3.connect('habits.db')
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO habits (name, date_created, color) VALUES (?, ?, ?)",
+            (name, date_created, color))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Habit added successfully"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/habits/<int:habit_id>', methods=['PUT'])
-def complete_habit(habit_id):
-    conn = sqlite3.connect('habits.db')
-    c = conn.cursor()
-    c.execute("UPDATE habits SET completed = 1 WHERE id = ?", (habit_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({"message": "Habit marked as completed"}), 200
-
+# Delete a habit
 @app.route('/habits/<int:habit_id>', methods=['DELETE'])
 def delete_habit(habit_id):
-    conn = sqlite3.connect('habits.db')
-    c = conn.cursor()
-    c.execute("DELETE FROM habits WHERE id = ?", (habit_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({"message": "Habit deleted successfully"}), 200
+    try:
+        conn = sqlite3.connect('habits.db')
+        c = conn.cursor()
+        c.execute("DELETE FROM habits WHERE id = ?", (habit_id,))
+        c.execute("DELETE FROM habit_history WHERE habit_id = ?", (habit_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Habit deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-# Serve the React frontend
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
+@app.route('/habits/<int:habit_id>/history', methods=['PUT'])
+def toggle_habit_completion(habit_id):
+    """
+    Toggle completion status for a habit for a given date (default: today).
+    """
+    try:
+        data = request.json
+        completed = int(data.get('completed', 0))
+        date = data.get('date') or datetime.date.today().isoformat()
+        conn = sqlite3.connect('habits.db')
+        c = conn.cursor()
+        c.execute(
+            "SELECT id FROM habit_history WHERE habit_id = ? AND date = ?",
+            (habit_id, date)
+        )
+        if c.fetchone():
+            c.execute(
+                "UPDATE habit_history SET completed = ? WHERE habit_id = ? AND date = ?",
+                (completed, habit_id, date)
+            )
+        else:
+            c.execute(
+                "INSERT INTO habit_history (habit_id, date, completed) VALUES (?, ?, ?)",
+                (habit_id, date, completed)
+            )
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Habit completion status updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/habits/<int:habit_id>/history', methods=['GET'])
+def get_habit_history(habit_id):
+    """
+    Get the completion history for a habit.
+    Returns a list of {date, completed} objects, sorted by date (ascending).
+    """
+    try:
+        conn = sqlite3.connect('habits.db')
+        c = conn.cursor()
+        c.execute(
+            "SELECT date, completed FROM habit_history WHERE habit_id = ? ORDER BY date ASC",
+            (habit_id,)
+        )
+        history = [
+            {"date": row[0], "completed": bool(row[1])}
+            for row in c.fetchall()
+        ]
+        conn.close()
+        return jsonify(history)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/habits/by-date/<date>', methods=['GET'])
+def get_habits_by_date(date):
+    """
+    Get all habits created on or before the given date, and their completion status for that date.
+    """
+    try:
+        conn = sqlite3.connect('habits.db')
+        c = conn.cursor()
+        c.execute("SELECT id, name, date_created, color FROM habits WHERE date_created <= ?", (date,))
+        habits = []
+        for habit_id, name, date_created, color in c.fetchall():
+            c.execute(
+                "SELECT completed FROM habit_history WHERE habit_id = ? AND date = ?",
+                (habit_id, date)
+            )
+            result = c.fetchone()
+            completed = bool(result[0]) if result else False
+            habits.append({
+                "id": habit_id,
+                "name": name,
+                "date_created": date_created,
+                "color": color,
+                "completed": completed
+            })
+        conn.close()
+        return jsonify(habits)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     init_db()

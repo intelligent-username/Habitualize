@@ -4,13 +4,27 @@
 
 ### Habitualize is a habit tracker app 🤯
 
-This is a simple yet powerful habit tracker, designed to help users manage and track their daily habits. The app is currently under development with a Flask backend and a ReactJS frontend.
+Simple, minimalist habit tracker app. Currently incomplete. This README is also incomplete. Currently, the app is usable but incomplete.
+
+What I will change:
+
+- 'Categories' feature
+- Improved design
+- Week bar bugs
+- Load up speed
+- "Package" the app so it's easier to run etc.
+- Make better compatible w/ Android
 
 ---
 
 ## How to Set It Up
 
 --
+
+### General Requirements
+
+- Python 3.1.0 or newer
+- node.js (install the TLS from [https://nodejs.org/en])
 
 ### Backend (Flask) Setup
 
@@ -46,12 +60,11 @@ Start the React development server:
     npm start
 ```
 
+- date-fns is also required, `npm install date-fns`
+
 Ensure the terminal you're in is in the frontend folder location.
 
 - Run these in different terminals
 
 The frontend will now be running on http://[localhost:3000](http://localhost:3000).
 
-Features (In Progress):
-
-- Track habits
