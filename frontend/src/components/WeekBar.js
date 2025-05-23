@@ -1,5 +1,6 @@
 import React from "react";
 import { getWeekDates, getMonthName, isSameDay } from "./dateUtils";
+import { startOfWeek } from "date-fns";
 
 function parseISODateToLocal(isoString) {
     const [year, month, day] = isoString.split('-');
@@ -15,7 +16,8 @@ const WeekBar = ({
     onOpenMonthView,
     onToday
 }) => {
-    const weekDates = getWeekDates(currentWeekStart);
+    // Always start week on Sunday
+    const weekDates = getWeekDates(currentWeekStart, 0); // 0 = Sunday
     const monthName = getMonthName(weekDates[0]);
     const selectedDateObj = parseISODateToLocal(selectedDate);
 
