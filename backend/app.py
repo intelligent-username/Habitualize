@@ -17,9 +17,8 @@ def init_db():
             name TEXT NOT NULL UNIQUE
         )
     ''')
-    # Insert default category if not exists
     c.execute("INSERT OR IGNORE INTO categories (id, name) VALUES (1, 'default')")
-    # Habits table
+    # Habits table with new columns
     c.execute('''
         CREATE TABLE IF NOT EXISTS habits (
             id INTEGER PRIMARY KEY,
@@ -27,9 +26,32 @@ def init_db():
             date_created TEXT NOT NULL,
             color TEXT DEFAULT 'gray',
             category_id INTEGER DEFAULT 1,
+            type TEXT DEFAULT 'binary',
+            target_value REAL,
+            sequence INTEGER DEFAULT 0,
+            sequence_group_id INTEGER,
+            sequence_order INTEGER,
+            cumulative INTEGER DEFAULT 0,
+            cumulative_goal REAL,
+            cumulative_period TEXT,
             FOREIGN KEY (category_id) REFERENCES categories(id)
         )
     ''')
+    # Add missing columns if upgrading
+    for col, typ in [
+        ('type', "TEXT DEFAULT 'binary'"),
+        ('target_value', "REAL"),
+        ('sequence', "INTEGER DEFAULT 0"),
+        ('sequence_group_id', "INTEGER"),
+        ('sequence_order', "INTEGER"),
+        ('cumulative', "INTEGER DEFAULT 0"),
+        ('cumulative_goal', "REAL"),
+        ('cumulative_period', "TEXT")
+    ]:
+        try:
+            c.execute(f"ALTER TABLE habits ADD COLUMN {col} {typ}")
+        except sqlite3.OperationalError:
+            pass  # Already exists
     # Habit history table
     c.execute('''
         CREATE TABLE IF NOT EXISTS habit_history (
@@ -40,7 +62,6 @@ def init_db():
             FOREIGN KEY (habit_id) REFERENCES habits (id)
         )
     ''')
-    # Ensure all habits have a category_id
     c.execute("UPDATE habits SET category_id = 1 WHERE category_id IS NULL")
     conn.commit()
     conn.close()
@@ -51,10 +72,10 @@ def get_habits():
         conn = sqlite3.connect('habits.db')
         c = conn.cursor()
         today = datetime.date.today().isoformat()
-        c.execute("SELECT id, name, date_created, color, category_id FROM habits")
+        c.execute("SELECT id, name, date_created, color, category_id, type, target_value, sequence, sequence_group_id, sequence_order, cumulative, cumulative_goal, cumulative_period FROM habits")
         habits = []
         for row in c.fetchall():
-            habit_id, name, date_created, color, category_id = row
+            (habit_id, name, date_created, color, category_id, type_, target_value, sequence, sequence_group_id, sequence_order, cumulative, cumulative_goal, cumulative_period) = row
             c.execute(
                 "SELECT completed FROM habit_history WHERE habit_id = ? AND date = ?",
                 (habit_id, today)
@@ -67,6 +88,14 @@ def get_habits():
                 "date_created": date_created,
                 "color": color,
                 "category_id": category_id,
+                "type": type_,
+                "target_value": target_value,
+                "sequence": sequence,
+                "sequence_group_id": sequence_group_id,
+                "sequence_order": sequence_order,
+                "cumulative": cumulative,
+                "cumulative_goal": cumulative_goal,
+                "cumulative_period": cumulative_period,
                 "completed": completed
             })
         conn.close()
@@ -81,14 +110,24 @@ def add_habit():
         name = data.get('name')
         color = data.get('color', 'gray')
         category_id = data.get('category_id', 1)
+        type_ = data.get('type', 'binary')
+        target_value = data.get('target_value')
+        sequence = data.get('sequence', 0)
+        sequence_group_id = data.get('sequence_group_id')
+        sequence_order = data.get('sequence_order')
+        cumulative = data.get('cumulative', 0)
+        cumulative_goal = data.get('cumulative_goal')
+        cumulative_period = data.get('cumulative_period')
         if not name:
             return jsonify({"error": "Habit name is required"}), 400
         date_created = datetime.date.today().isoformat()
         conn = sqlite3.connect('habits.db')
         c = conn.cursor()
         c.execute(
-            "INSERT INTO habits (name, date_created, color, category_id) VALUES (?, ?, ?, ?)",
-            (name, date_created, color, category_id))
+            '''INSERT INTO habits (name, date_created, color, category_id, type, target_value, sequence, sequence_group_id, sequence_order, cumulative, cumulative_goal, cumulative_period)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (name, date_created, color, category_id, type_, target_value, sequence, sequence_group_id, sequence_order, cumulative, cumulative_goal, cumulative_period)
+        )
         conn.commit()
         conn.close()
         return jsonify({"message": "Habit added successfully"}), 201
@@ -102,13 +141,21 @@ def update_habit(habit_id):
         name = data.get('name')
         color = data.get('color')
         category_id = data.get('category_id')
+        type_ = data.get('type', 'binary')
+        target_value = data.get('target_value')
+        sequence = data.get('sequence', 0)
+        sequence_group_id = data.get('sequence_group_id')
+        sequence_order = data.get('sequence_order')
+        cumulative = data.get('cumulative', 0)
+        cumulative_goal = data.get('cumulative_goal')
+        cumulative_period = data.get('cumulative_period')
         if not name or not color or not category_id:
             return jsonify({"error": "Missing fields"}), 400
         conn = sqlite3.connect('habits.db')
         c = conn.cursor()
         c.execute(
-            "UPDATE habits SET name = ?, color = ?, category_id = ? WHERE id = ?",
-            (name, color, category_id, habit_id)
+            '''UPDATE habits SET name = ?, color = ?, category_id = ?, type = ?, target_value = ?, sequence = ?, sequence_group_id = ?, sequence_order = ?, cumulative = ?, cumulative_goal = ?, cumulative_period = ? WHERE id = ?''',
+            (name, color, category_id, type_, target_value, sequence, sequence_group_id, sequence_order, cumulative, cumulative_goal, cumulative_period, habit_id)
         )
         conn.commit()
         conn.close()
@@ -180,9 +227,10 @@ def get_habits_by_date(date):
     try:
         conn = sqlite3.connect('habits.db')
         c = conn.cursor()
-        c.execute("SELECT id, name, date_created, color, category_id FROM habits WHERE date_created <= ?", (date,))
+        c.execute("SELECT id, name, date_created, color, category_id, type, target_value, sequence, sequence_group_id, sequence_order, cumulative, cumulative_goal, cumulative_period FROM habits WHERE date_created <= ?", (date,))
         habits = []
-        for habit_id, name, date_created, color, category_id in c.fetchall():
+        for row in c.fetchall():
+            (habit_id, name, date_created, color, category_id, type_, target_value, sequence, sequence_group_id, sequence_order, cumulative, cumulative_goal, cumulative_period) = row
             c.execute(
                 "SELECT completed FROM habit_history WHERE habit_id = ? AND date = ?",
                 (habit_id, date)
@@ -195,6 +243,14 @@ def get_habits_by_date(date):
                 "date_created": date_created,
                 "color": color,
                 "category_id": category_id,
+                "type": type_,
+                "target_value": target_value,
+                "sequence": sequence,
+                "sequence_group_id": sequence_group_id,
+                "sequence_order": sequence_order,
+                "cumulative": cumulative,
+                "cumulative_goal": cumulative_goal,
+                "cumulative_period": cumulative_period,
                 "completed": completed
             })
         conn.close()
@@ -265,4 +321,3 @@ def delete_category(category_id):
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
-    
