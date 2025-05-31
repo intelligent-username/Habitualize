@@ -66,5 +66,43 @@ Ensure the terminal you're in is in the frontend folder location.
 
 - Run these in different terminals
 
-The frontend will now be running on http://[localhost:3000](http://localhost:3000).
+The frontend will now be running on http://[localhost:3000](http://localhost:3000). **For now**, when running locally, THIS is where the app will be. Go to [localhost:3000] in your browser (for example, Chrome) to use the app.
 
+## Some Features
+
+### Habit Types
+
+#### 1. Binary
+
+Description:
+The classic habit tracker type. Mark the habit as complete (checked) or incomplete (unchecked) for each day.
+Example:
+“Read for 10 minutes”, “Go for a walk”.
+
+#### 2. Reverse Binary
+
+Description:
+Used for “negative” habits. The habit is considered complete by default (checked); uncheck it if you “fail” (e.g., break a rule).
+Example:
+“No sugar today”, “No drinking”.
+
+#### 3. Timer
+
+Description:
+Track habits that require spending a certain amount of time. Start a timer and mark the habit as complete when the target time is reached.
+Example:
+“Meditate for 5 minutes”, “Exercise for 30 minutes”.
+
+#### 4. Counter
+
+Description:
+Track habits that require a specific number of repetitions. Enter or select the number of times you performed the habit and save your progress.
+Example:
+“Do 50 push-ups”, “Drink 8 glasses of water”.
+
+#### 5. Entry-based
+
+Description:
+Track habits by entering a numeric value each day. Useful for habits where the value changes daily and is not a fixed target.
+Example:
+“Record weight”, “Log hours studied”, “Money saved”.

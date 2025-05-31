@@ -17,7 +17,7 @@ const WeekBar = ({
     onToday
 }) => {
     // Always start week on Sunday
-    const weekDates = getWeekDates(currentWeekStart, 0); // 0 = Sunday
+    const weekDates = getWeekDates(currentWeekStart);
     const monthName = getMonthName(weekDates[0]);
     const selectedDateObj = parseISODateToLocal(selectedDate);
 

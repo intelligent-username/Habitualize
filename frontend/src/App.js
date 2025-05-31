@@ -2,142 +2,208 @@ import React, { useState, useEffect } from "react";
 import './App.css';
 import WeekBar from "./components/WeekBar";
 import MonthView from "./components/MonthView";
-import { addDays, subDays, format, startOfWeek, parseISO } from 'date-fns';
 import Modal from "./components/Modal";
 import { HabitItem, HabitForm } from "./components/Habit";
 import CategoryBar from "./components/CategoryBar";
 
-function getLocalDateString(date) {
-    return format(date, 'yyyy-MM-dd');
-}
+// Custom hooks
+import { useCategories } from "./hooks/useCategories";
+import { useSequences } from "./hooks/useSequences";
+import { useHabits } from "./hooks/useHabits";
+
+// Utils
+import { 
+    getLocalDateString, 
+    getCurrentWeekStart, 
+    getPreviousWeek, 
+    getNextWeek 
+} from "./utils/dateHelpers";
+
+const DEFAULT_TYPE = "binary";
 
 const App = () => {
-    const [habits, setHabits] = useState([]);
-    const [newHabit, setNewHabit] = useState("");
-    const [color, setColor] = useState("gray");
+    // Date state
     const [selectedDate, setSelectedDate] = useState(() => getLocalDateString(new Date()));
+    const [currentWeekStart, setCurrentWeekStart] = useState(() => getCurrentWeekStart(getLocalDateString(new Date())));
+
+    // Categories
+    const {
+        categories,
+        selectedCategoryId,
+        selectCategory,
+        createCategory,
+        updateCategory,
+        deleteCategory
+    } = useCategories();
+
+    // Sequences with refresh callback
+    const {
+        sequences,
+        fetchSequencesByDate,
+        createSingleHabitSequence,
+        createMultiStepSequence,
+        updateSequence,
+        deleteSequence,
+        getSequence
+    } = useSequences(selectedDate, categories);
+
+    // Habits with refresh callback
+    const { 
+        toggleCompletion, 
+        updateHabit: updateHabitHook, 
+        deleteHabit: deleteHabitHook 
+    } = useHabits(() => fetchSequencesByDate(selectedDate));
+
+    // UI state
     const [showHabitForm, setShowHabitForm] = useState(false);
     const [showMonthView, setShowMonthView] = useState(false);
-    const [categories, setCategories] = useState([]);
-    const [selectedCategoryId, setSelectedCategoryId] = useState(1); // default category
-    const [categoryId, setCategoryId] = useState(1); // for new habit form
-    const [currentWeekStart, setCurrentWeekStart] = useState(() =>
-        getLocalDateString(startOfWeek(new Date(), { weekStartsOn: 0 }))
-    );
     const [showCategoryModal, setShowCategoryModal] = useState(false);
+
+    // Form state
+    const [newHabit, setNewHabit] = useState("");
+    const [color, setColor] = useState("gray");
+    const [type, setType] = useState(DEFAULT_TYPE);
+    const [targetValue, setTargetValue] = useState("");
+    const [categoryId, setCategoryId] = useState(1);
+
+    // Edit state
+    const [editingHabit, setEditingHabit] = useState(null);
+    const [editingSequence, setEditingSequence] = useState(null);
+
+    // Category modal state
     const [newCategoryName, setNewCategoryName] = useState("");
     const [renameCategoryId, setRenameCategoryId] = useState(null);
     const [renameCategoryName, setRenameCategoryName] = useState("");
-    const [editingHabit, setEditingHabit] = useState(null);
 
+    // Update week start when date changes
     useEffect(() => {
-        const start = getLocalDateString(startOfWeek(parseISO(selectedDate), { weekStartsOn: 0 }));
-        setCurrentWeekStart(start);
+        setCurrentWeekStart(getCurrentWeekStart(selectedDate));
     }, [selectedDate]);
 
-    // Fetch categories on mount
-    useEffect(() => {
-        fetchCategories();
-    }, []);
-
-    // Fetch habits when date or selected category changes
-    useEffect(() => {
-        fetchHabitsByDate(selectedDate);
-    }, [selectedDate, categories]);
-
-    const fetchHabitsByDate = async (date) => {
-        try {
-            const response = await fetch(`http://127.0.0.1:5000/habits/by-date/${date}`);
-            const data = await response.json();
-            setHabits(data);
-        } catch (error) {
-            console.error("Failed to fetch habits by date:", error);
-        }
-    };
-
-    const fetchCategories = async () => {
-        try {
-            const response = await fetch("http://127.0.0.1:5000/categories");
-            const data = await response.json();
-            setCategories(data);
-            // If selectedCategoryId is gone (e.g. after delete), reset to default
-            if (!data.find(cat => cat.id === selectedCategoryId)) {
-                setSelectedCategoryId(1);
-            }
-            // If creating a habit, default to selected or first category
-            if (!data.find(cat => cat.id === categoryId)) {
-                setCategoryId(data[0]?.id || 1);
-            }
-        } catch (error) {
-            console.error("Failed to fetch categories:", error);
-        }
-    };
-
-    const addHabit = async () => {
-        if (!newHabit.trim()) return;
-        try {
-            await fetch("http://127.0.0.1:5000/habits", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: newHabit, color, category_id: categoryId }),
+    // --- Habit/Sequence Creation ---
+    const addHabit = async (habitObj) => {
+        if (typeof habitObj === "string" || typeof habitObj === "undefined") {
+            if (!newHabit.trim()) return;
+            await createSingleHabitSequence({
+                name: newHabit,
+                color,
+                category_id: categoryId,
+                type,
+                target_value: targetValue || null
             });
-            setNewHabit("");
-            setColor("gray");
-            setCategoryId(selectedCategoryId || 1);
-            setShowHabitForm(false);
-            fetchHabitsByDate(selectedDate);
-        } catch (error) {
-            console.error("Failed to add habit:", error);
+            resetHabitForm();
+            return;
+        }
+
+        await createSingleHabitSequence(habitObj);
+        resetHabitForm();
+    };
+
+    // Global function for multi-step sequences
+    window.addSequenceHabit = async (sequenceData) => {
+        await createMultiStepSequence(sequenceData);
+        resetHabitForm();
+    };
+
+    const handleEditHabit = (habit) => {
+        const seq = sequences.find(s => s.steps.some(h => h.id === habit.id));
+        if (seq && seq.steps.length === 1) {
+            setEditingHabit(habit);
+            setEditingSequence(null);
+            setNewHabit(habit.name);
+            setColor(seq.color);
+            setCategoryId(seq.category_id);
+            setType(habit.type || DEFAULT_TYPE);
+            setTargetValue(habit.target_value || "");
+            setShowHabitForm(true);
+        } else if (seq) {
+            handleEditSequence(seq);
         }
     };
 
     const updateHabit = async () => {
         if (!newHabit.trim() || !editingHabit) return;
+        
+        const payload = {
+            name: newHabit,
+            type,
+            target_value: targetValue || null,
+        };
+        
+        // Preserve cumulative fields
+        if (typeof editingHabit.cumulative !== 'undefined') payload.cumulative = editingHabit.cumulative;
+        if (typeof editingHabit.cumulative_goal !== 'undefined') payload.cumulative_goal = editingHabit.cumulative_goal;
+        if (typeof editingHabit.cumulative_period !== 'undefined') payload.cumulative_period = editingHabit.cumulative_period;
+
         try {
-            await fetch(`http://127.0.0.1:5000/habits/${editingHabit.id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: newHabit,
+            // Update habit using hook
+            await updateHabitHook(editingHabit.id, payload);
+
+            // Update sequence if color/category changed
+            const seq = sequences.find(s => s.steps.some(h => h.id === editingHabit.id));
+            if (seq && (seq.color !== color || seq.category_id !== categoryId)) {
+                await updateSequence({
+                    id: seq.id,
+                    name: seq.name,
                     color,
                     category_id: categoryId
-                }),
-            });
-            setEditingHabit(null);
-            setNewHabit("");
-            setColor("gray");
-            setCategoryId(selectedCategoryId || 1);
-            setShowHabitForm(false);
-            fetchHabitsByDate(selectedDate);
+                });
+            }
+
+            resetHabitForm();
         } catch (error) {
             console.error("Failed to update habit:", error);
         }
     };
 
-    const deleteHabit = async (id) => {
+    const resetHabitForm = () => {
+        setEditingHabit(null);
+        setEditingSequence(null);
+        setNewHabit("");
+        setColor("gray");
+        setType(DEFAULT_TYPE);
+        setTargetValue("");
+        setCategoryId(selectedCategoryId || 1);
+        setShowHabitForm(false);
+    };
+
+    // --- Deletion logic ---
+    const deleteHabit = async (habit, sequence) => {
         const confirmed = window.confirm("Are you sure you want to delete this habit?");
         if (!confirmed) return;
+
         try {
-            await fetch(`http://127.0.0.1:5000/habits/${id}`, {
-                method: "DELETE",
-            });
-            fetchHabitsByDate(selectedDate);
+            if (sequence.steps.length === 1) {
+                await deleteSequence(sequence.id);
+            } else {
+                await deleteHabitHook(habit.id);
+            }
         } catch (error) {
             console.error("Failed to delete habit:", error);
         }
     };
 
-    const toggleCompletion = async (id, completed) => {
-        try {
-            await fetch(`http://127.0.0.1:5000/habits/${id}/history`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ completed: completed ? 1 : 0, date: selectedDate }),
-            });
-            fetchHabitsByDate(selectedDate);
-        } catch (error) {
-            console.error("Failed to toggle completion:", error);
-        }
+    const handleDeleteSequence = async (sequenceId) => {
+        const confirmed = window.confirm("Are you sure you want to delete this sequence?");
+        if (!confirmed) return;
+        await deleteSequence(sequenceId);
+    };
+
+    // --- Navigation ---
+    const handleSelectDate = (date) => {
+        setSelectedDate(getLocalDateString(date));
+    };
+
+    const handlePrevWeek = () => {
+        setSelectedDate(getPreviousWeek(selectedDate));
+    };
+
+    const handleNextWeek = () => {
+        setSelectedDate(getNextWeek(selectedDate));
+    };
+
+    const handleToday = () => {
+        setSelectedDate(getLocalDateString(new Date()));
     };
 
     const handleInputKeyDown = (e) => {
@@ -146,29 +212,7 @@ const App = () => {
         }
     };
 
-    // WeekBar handlers
-    const handleSelectDate = (date) => {
-        setSelectedDate(getLocalDateString(date));
-    };
-
-    const handlePrevWeek = () => {
-        const prevWeek = subDays(parseISO(selectedDate), 7);
-        setSelectedDate(getLocalDateString(prevWeek));
-    };
-
-    const handleNextWeek = () => {
-        const nextWeek = addDays(parseISO(selectedDate), 7);
-        setSelectedDate(getLocalDateString(nextWeek));
-    };
-
-    const handleOpenMonthView = () => setShowMonthView(true);
-    const handleCloseMonthView = () => setShowMonthView(false);
-
-    const handleToday = () => {
-        setSelectedDate(getLocalDateString(new Date()));
-    };
-
-    // Category management
+    // --- Category management ---
     const handleOpenCategoryModal = () => {
         setShowCategoryModal(true);
         setNewCategoryName("");
@@ -186,29 +230,20 @@ const App = () => {
     const handleAddCategory = async () => {
         if (!newCategoryName.trim()) return;
         try {
-            await fetch("http://127.0.0.1:5000/categories", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: newCategoryName }),
-            });
+            await createCategory(newCategoryName);
             setNewCategoryName("");
-            fetchCategories();
         } catch (error) {
             console.error("Failed to add category:", error);
         }
     };
 
     const handleDeleteCategory = async (id) => {
-        if (id === 1) return; // Don't delete default
+        if (id === 1) return;
         const confirmed = window.confirm("Are you sure you want to delete this category?");
         if (!confirmed) return;
         try {
-            await fetch(`http://127.0.0.1:5000/categories/${id}`, {
-                method: "DELETE",
-            });
-            if (selectedCategoryId === id) setSelectedCategoryId(1);
-            fetchCategories();
-            fetchHabitsByDate(selectedDate);
+            await deleteCategory(id);
+            await fetchSequencesByDate(selectedDate);
         } catch (error) {
             console.error("Failed to delete category:", error);
         }
@@ -222,30 +257,31 @@ const App = () => {
     const handleRenameCategory = async () => {
         if (!renameCategoryName.trim() || !renameCategoryId) return;
         try {
-            await fetch(`http://127.0.0.1:5000/categories/${renameCategoryId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: renameCategoryName }),
-            });
+            await updateCategory(renameCategoryId, renameCategoryName);
             setRenameCategoryId(null);
             setRenameCategoryName("");
-            fetchCategories();
         } catch (error) {
             console.error("Failed to rename category:", error);
         }
     };
 
-    // Habit editing
-    const handleEditHabit = (habit) => {
-        setEditingHabit(habit);
-        setNewHabit(habit.name);
-        setColor(habit.color);
-        setCategoryId(habit.category_id);
-        setShowHabitForm(true);
+    // --- Sequence editing ---
+    const handleEditSequence = async (seq) => {
+        try {
+            const sequenceData = await getSequence(seq.id);
+            setEditingSequence(sequenceData);
+            setEditingHabit(null);
+            setNewHabit(sequenceData.name);
+            setColor(sequenceData.color);
+            setCategoryId(sequenceData.category_id);
+            setShowHabitForm(true);
+        } catch (error) {
+            console.error("Failed to fetch sequence for editing:", error);
+        }
     };
 
-    // Filter habits by selected category
-    const filteredHabits = habits.filter(habit => habit.category_id === selectedCategoryId);
+    // Filter sequences by selected category
+    const filteredSequences = sequences.filter(seq => seq.category_id === selectedCategoryId);
 
     return (
         <div className="container">
@@ -256,13 +292,13 @@ const App = () => {
                 onSelectDate={handleSelectDate}
                 onPrevWeek={handlePrevWeek}
                 onNextWeek={handleNextWeek}
-                onOpenMonthView={handleOpenMonthView}
+                onOpenMonthView={() => setShowMonthView(true)}
                 onToday={handleToday}
             />
             <CategoryBar
                 categories={categories}
                 selectedCategoryId={selectedCategoryId}
-                onSelect={setSelectedCategoryId}
+                onSelect={selectCategory}
             />
             <button
                 className="add-category-btn"
@@ -274,45 +310,80 @@ const App = () => {
                 <MonthView
                     selectedDate={selectedDate}
                     onSelectDate={handleSelectDate}
-                    onClose={handleCloseMonthView}
+                    onClose={() => setShowMonthView(false)}
                 />
             )}
             <ul className="habit-list">
-                {filteredHabits
-                    .slice()
-                    .sort((a, b) => a.completed - b.completed)
-                    .map((habit) => (
+                {filteredSequences.map(seq => (
+                    seq.steps.length === 1 ? (
                         <HabitItem
-                            key={habit.id}
-                            habit={habit}
-                            toggleCompletion={toggleCompletion}
-                            deleteHabit={deleteHabit}
+                            key={seq.steps[0].id}
+                            habit={{ ...seq.steps[0], color: seq.color }}
+                            toggleCompletion={(id, completed, value) => 
+                                toggleCompletion(id, completed, value, selectedDate)
+                            }
+                            deleteHabit={habit => deleteHabit(habit, seq)}
                             onEdit={handleEditHabit}
                         />
-                    ))}
+                    ) : (
+                        <div className="sequence-group" key={seq.id}>
+                            <div className="sequence-label">{seq.name}</div>
+                            <button
+                                className="edit-sequence-btn"
+                                style={{ marginBottom: "0.7rem", marginLeft: "1rem", background: "var(--accent)", color: "var(--bg-primary)", border: "none", borderRadius: "6px", padding: "6px 18px", fontWeight: 600, fontSize: "1.05rem", cursor: "pointer" }}
+                                onClick={() => handleEditSequence(seq)}
+                            >
+                                Edit Sequence
+                            </button>
+                            <ul className="sequence-children">
+                                {seq.steps.map((habit, idx) => {
+                                    const firstIncompleteIdx = seq.steps.findIndex(h => !h.completed);
+                                    const disabled = idx > firstIncompleteIdx && firstIncompleteIdx !== -1;
+                                    return (
+                                        <HabitItem
+                                            key={habit.id}
+                                            habit={{ ...habit, color: seq.color }}
+                                            toggleCompletion={(id, completed, value) => {
+                                                if (!completed && idx < seq.steps.length - 1) {
+                                                    for (let i = idx + 1; i < seq.steps.length; i++) {
+                                                        if (seq.steps[i].completed) {
+                                                            toggleCompletion(seq.steps[i].id, false, undefined, selectedDate);
+                                                        }
+                                                    }
+                                                }
+                                                toggleCompletion(id, completed, value, selectedDate);
+                                            }}
+                                            deleteHabit={h => deleteHabit(h, seq)}
+                                            onEdit={handleEditHabit}
+                                            disabled={disabled}
+                                        />
+                                    );
+                                })}
+                            </ul>
+                            <button className="delete-sequence-btn" onClick={() => handleDeleteSequence(seq.id)}>Delete Sequence</button>
+                        </div>
+                    )
+                ))}
             </ul>
             <button onClick={() => {
                 setShowHabitForm(true);
                 setEditingHabit(null);
                 setNewHabit("");
                 setColor("gray");
+                setType(DEFAULT_TYPE);
+                setTargetValue("");
                 setCategoryId(selectedCategoryId || 1);
             }} className="toggle-habit-form-button">
                 {showHabitForm && !editingHabit ? "Cancel" : "Create New Habit"}
             </button>
             {showHabitForm && (
-                <Modal onClose={() => {
-                    setShowHabitForm(false);
-                    setEditingHabit(null);
-                    setNewHabit("");
-                    setColor("gray");
-                    setCategoryId(selectedCategoryId || 1);
-                }}>
+                <Modal onClose={resetHabitForm}>
                     <HabitForm
                         newHabit={newHabit}
                         setNewHabit={setNewHabit}
                         addHabit={addHabit}
                         updateHabit={updateHabit}
+                        updateSequence={updateSequence}
                         editingHabit={editingHabit}
                         handleInputKeyDown={handleInputKeyDown}
                         color={color}
@@ -320,6 +391,12 @@ const App = () => {
                         categories={categories}
                         categoryId={categoryId}
                         setCategoryId={setCategoryId}
+                        type={type}
+                        setType={setType}
+                        targetValue={targetValue}
+                        setTargetValue={setTargetValue}
+                        editingSequence={editingSequence}
+                        onUpdateSequence={updateSequence}
                     />
                 </Modal>
             )}
@@ -370,13 +447,10 @@ const App = () => {
                 </Modal>
             )}
             <div className="footer-text">
-                <small>
-                    You can mark completion for any date
-                </small>
+                <small>You can mark completion for any date</small>
             </div>
         </div>
     );
 };
 
 export default App;
- 
