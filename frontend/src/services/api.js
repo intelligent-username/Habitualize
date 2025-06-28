@@ -3,7 +3,7 @@
  * Centralizes all HTTP requests to the Flask backend
  */
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
 
 class ApiService {
     /**
@@ -32,11 +32,17 @@ class ApiService {
             console.error(`API Error (${endpoint}):`, error);
             throw error;
         }
-    }
-
-    // Category operations
+    }    // Category operations
     async getCategories() {
-        return this.request('/categories');
+        console.log('[API] getCategories called, making request to /categories');
+        try {
+            const result = await this.request('/categories');
+            console.log('[API] getCategories success, result:', result);
+            return result;
+        } catch (error) {
+            console.error('[API] getCategories failed:', error);
+            throw error;
+        }
     }
 
     async createCategory(name) {
@@ -94,6 +100,10 @@ class ApiService {
             method: 'POST',
             body: JSON.stringify(habitData),
         });
+    }
+
+    async getSequenceHabits(sequenceId) {
+        return this.request(`/sequences/${sequenceId}/habits`);
     }
 
     async updateHabit(id, habitData) {

@@ -1,33 +1,43 @@
 {
-  "name": "habitualize",
+  "name": "habitualize-frontend",
+  "private": true,
   "version": "1.0.0",
-  "description": "Habitualize is a habit tracker app",
-  "main": "src/index.js",
+  "description": "Frontend for Habitualize app.",
+  "author": "Your Name <your@email.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/habitualize"
+  },
+  "type": "module",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "clean": "rimraf build node_modules/.vite",
+    "format": "prettier --write ."
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.81.2",
+    "@tanstack/react-query-devtools": "^5.81.2",
     "date-fns": "^4.1.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "react-scripts": "latest"
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^6.30.1"
   },
-  "keywords": [],
-  "author": "Your Name",
-  "license": "MIT",
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.6.0",
+    "@vitejs/plugin-react-swc": "^3.9.0",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "vite": "^6.3.5"
   }
 }

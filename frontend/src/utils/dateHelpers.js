@@ -6,6 +6,17 @@
 import { format, startOfWeek, parseISO, addDays, subDays } from 'date-fns';
 
 /**
+ * Parse ISO date string to local Date object
+ * @param {string} isoString - ISO date string (YYYY-MM-DD)
+ * @returns {Date} - Local Date object
+ * @example parseISODateToLocal("2025-05-30") // Date object for May 30, 2025
+ */
+export function parseISODateToLocal(isoString) {
+    const [year, month, day] = isoString.split('-');
+    return new Date(Number(year), Number(month) - 1, Number(day));
+}
+
+/**
  * Convert date to local date string format (YYYY-MM-DD)
  * @param {Date} date - Date object
  * @returns {string} - Formatted date string
@@ -90,4 +101,15 @@ export function getPreviousWeek(selectedDate) {
 export function getNextWeek(selectedDate) {
     const nextWeek = addDays(parseISO(selectedDate), 7);
     return getLocalDateString(nextWeek);
+}
+
+/**
+ * Get number of days in a given month
+ * @param {number} year - Year (4 digits)
+ * @param {number} month - Month (0-11, JavaScript month indexing)
+ * @returns {number} - Number of days in the month
+ * @example getDaysInMonth(2025, 4) // 31 (May has 31 days)
+ */
+export function getDaysInMonth(year, month) {
+    return new Date(year, month + 1, 0).getDate();
 }

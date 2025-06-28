@@ -1,0 +1,43 @@
+.placeholder-card-container {
+  max-width: 600px;
+  margin: 60px auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px #0002;
+  padding: 48px 36px;
+  text-align: center;
+  transition: box-shadow 0.2s;
+  border: 1.5px solid #e0e0e0;
+}
+
+.placeholder-card-container:hover {
+  box-shadow: 0 8px 32px #0003;
+}
+
+.placeholder-card-container h1 {
+  color: #2d2d6a;
+  margin-bottom: 20px;
+  font-size: 2.2rem;
+  letter-spacing: 1px;
+}
+
+.placeholder-card-container p {
+  color: #444;
+  font-size: 1.15em;
+  margin-bottom: 18px;
+}
+
+.placeholder-card-info {
+  margin-top: 32px;
+  color: #0077b6;
+  font-weight: bold;
+  font-size: 1.08em;
+}
+
+.placeholder-card-extra {
+  margin-top: 32px;
+  color: #b36a00;
+  font-weight: bold;
+  font-size: 1.08em;
+  letter-spacing: 0.5px;
+}

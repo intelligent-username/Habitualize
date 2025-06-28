@@ -3,115 +3,72 @@
  * Handles individual habit CRUD and completion tracking
  */
 
-import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiService from '../services/api';
 
 export const useHabits = (refreshSequences) => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const queryClient = useQueryClient();
 
-    /**
-     * Update habit completion status
-     * @param {number} habitId - Habit ID
-     * @param {boolean} completed - Completion status
-     * @param {number} value - Habit value (for counter/entry types)
-     * @param {string} date - Date string
-     * @returns {Promise<void>}
-     */
-    const toggleCompletion = async (habitId, completed, value, date) => {
-        try {
-            setLoading(true);
-            setError(null);
-            
+    // Toggle completion mutation
+    const toggleCompletionMutation = useMutation({
+        mutationFn: async ({ habitId, completed, value, date }) => {
             await apiService.updateHabitCompletion(habitId, {
                 completed: completed ? 1 : 0,
                 value: value !== undefined ? value : null,
                 date
             });
-
-            // Refresh sequences to show updated status
-            if (refreshSequences) {
-                await refreshSequences();
-            }
-        } catch (err) {
-            setError(err.message);
-            throw err;
-        } finally {
-            setLoading(false);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sequences'] });
         }
-    };
+    });
 
-    /**
-     * Update habit details
-     * @param {number} habitId - Habit ID
-     * @param {Object} habitData - Updated habit data
-     * @returns {Promise<void>}
-     */
-    const updateHabit = async (habitId, habitData) => {
-        try {
-            setLoading(true);
-            setError(null);
-            
-            const result = await apiService.updateHabit(habitId, habitData);
-            
-            if (refreshSequences) {
-                await refreshSequences();
-            }
-            
-            return result;
-        } catch (err) {
-            setError(err.message);
-            throw err;
-        } finally {
-            setLoading(false);
+    // Update habit mutation
+    const updateHabitMutation = useMutation({
+        mutationFn: async ({ habitId, habitData }) => {
+            return await apiService.updateHabit(habitId, habitData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sequences'] });
         }
-    };
+    });
 
-    /**
-     * Delete habit
-     * @param {number} habitId - Habit ID
-     * @returns {Promise<void>}
-     */
-    const deleteHabit = async (habitId) => {
-        try {
-            setLoading(true);
-            setError(null);
-            
+    // Delete habit mutation
+    const deleteHabitMutation = useMutation({
+        mutationFn: async (habitId) => {
             await apiService.deleteHabit(habitId);
-            
-            if (refreshSequences) {
-                await refreshSequences();
-            }
-        } catch (err) {
-            setError(err.message);
-            throw err;
-        } finally {
-            setLoading(false);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sequences'] });
         }
+    });
+
+    // Get habit history query (returns a function for on-demand fetching)
+    const getHabitHistory = (habitId) => {
+        return useQuery({
+            queryKey: ['habitHistory', habitId],
+            queryFn: () => apiService.getHabitHistory(habitId),
+            enabled: !!habitId
+        });
     };
 
-    /**
-     * Get habit completion history
-     * @param {number} habitId - Habit ID
-     * @returns {Promise<Array>} - Habit history array
-     */
-    const getHabitHistory = async (habitId) => {
-        try {
-            setLoading(true);
-            setError(null);
-            
-            return await apiService.getHabitHistory(habitId);
-        } catch (err) {
-            setError(err.message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Wrappers to match original API
+    const toggleCompletion = (habitId, completed, value, date) =>
+        toggleCompletionMutation.mutateAsync({ habitId, completed, value, date });
+    const updateHabit = (habitId, habitData) =>
+        updateHabitMutation.mutateAsync({ habitId, habitData });
+    const deleteHabit = (habitId) =>
+        deleteHabitMutation.mutateAsync(habitId);
 
     return {
-        loading,
-        error,
+        loading:
+            toggleCompletionMutation.isLoading ||
+            updateHabitMutation.isLoading ||
+            deleteHabitMutation.isLoading,
+        error:
+            toggleCompletionMutation.error?.message ||
+            updateHabitMutation.error?.message ||
+            deleteHabitMutation.error?.message || null,
         toggleCompletion,
         updateHabit,
         deleteHabit,

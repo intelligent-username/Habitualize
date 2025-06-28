@@ -4,27 +4,55 @@
 
 ### Habitualize is a habit tracker app 🤯
 
-Simple, minimalist habit tracker app. Currently incomplete. This README is also incomplete. Currently, the app is usable but incomplete.
+Simple, minimalist habit tracker app. Track habits by entering a numeric value each day. Useful for habits where the value changes daily and is not a fixed target. The app is still in development, but most features work.
+Example:
+"Record weight", "Log hours studied", "Money saved".
+
+## Quick Troubleshooting
+
+**Something not working?**
+
+- **Backend won't start**: Make sure you're in the `/backend` folder when running `python app.py`
+- **Frontend won't start**: Make sure you're in the `/frontend` folder when running `npm run dev`
+- **Can't connect**: Backend should be on port 5000, frontend on port 3000
+- **Still stuck?**: Check the detailed READMEs in `/backend` and `/frontend` folders
+
+**Pro tip**: Run backend and frontend in separate terminal windows/tabs.
 
 What I will change:
 
-- 'Categories' feature
-- Improved design
-- Week bar bugs
-- Load up speed
-- "Package" the app so it's easier to run etc.
-- Make better compatible w/ Android
+- Re-implement 'Categories'
+- Improve the UI
+- "Package" the app better (loading screen, etc. etc.).
+- Soon to come: Mobile Versions
 
 ---
 
-## How to Set It Up
+## Set Up
+
+**Quick note**: For detailed setup info, check out the individual READMEs in `/backend` and `/frontend` folders.
+
+### What's What (Project Structure)
+
+```md
+Habitualize/
+├── backend/     # Flask API server (Python)
+├── frontend/    # React app (JavaScript)
+└── README.md    # This file
+```
+
+### Tech Stack
+
+- **Backend**: Flask + SQLite (auto-creates database)
+- **Frontend**: React 19 + Vite + TanStack Query + react-router-dom@6
+- **Why these?**: Fast to set up, easy to modify, good for prototyping
 
 --
 
 ### General Requirements
 
-- Python 3.1.0 or newer
-- node.js (install the TLS from [https://nodejs.org/en])
+- Python 3.10+
+- Node.js (install the LTS from [https://nodejs.org/en])
 
 ### Backend (Flask) Setup
 
@@ -40,7 +68,7 @@ What I will change:
     python app.py
 ```
 
-The backend will now be running on [127.0.0.1:500](http://127.0.0.1:5000).
+The backend will now be running on [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
 --
 
@@ -57,16 +85,16 @@ On a SEPARATE terminal, Navigate to the **frontend folder** and install the nece
 Start the React development server:
 
 ```bash
-    npm start
+    npm run dev
 ```
 
-- date-fns is also required, `npm install date-fns`
+(The dependencies like date-fns, Vite, and react-query-devtools are already included in package.json - no need to install separately!)
 
 Ensure the terminal you're in is in the frontend folder location.
 
 - Run these in different terminals
 
-The frontend will now be running on http://[localhost:3000](http://localhost:3000). **For now**, when running locally, THIS is where the app will be. Go to [localhost:3000] in your browser (for example, Chrome) to use the app.
+The frontend will now be running on [http://localhost:3000](http://localhost:3000). **For now**, when running locally, THIS is where the app will be. Go to localhost:3000 in your browser (for example, Chrome) to use the app.
 
 ## Some Features
 
