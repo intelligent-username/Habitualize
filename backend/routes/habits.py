@@ -15,9 +15,21 @@ habits_bp = Blueprint('habits', __name__, url_prefix='/habits')
 
 @habits_bp.route('', methods=['POST'])
 def add_habit():
-    columns = ['sequence_id', 'step_order', 'name', 'type', 'target_value', 'cumulative', 'cumulative_goal', 'cumulative_period']
-    vals = extract_data(request.json, columns) + (get_today(),) 
-    habit_id = run_query(MAKE_HABIT, params=vals)
+    data = request.json
+    columns = ['sequence_id', 'step_order', 'name', 'type', 'target_value', 'cumulative', 'cumulative_goal', 'cumulative_period', 'icon']
+    
+    # Set default icon if not provided
+    if 'icon' not in data or not data['icon']:
+        data['icon'] = current_app.config.get('DEFAULT_ICON', 'default.svg')
+
+    # Reorder to match the MAKE_HABIT query
+    ordered_cols = ['sequence_id', 'step_order', 'name', 'type', 'target_value', 'cumulative', 'cumulative_goal', 'cumulative_period', 'icon']
+    vals = extract_data(data, ordered_cols)
+    
+    # Add date_created
+    final_vals = (vals[0], vals[1], vals[2], vals[3], vals[4], get_today(), vals[5], vals[6], vals[7], vals[8])
+    
+    habit_id = run_query(MAKE_HABIT, params=final_vals)
     return jsonify({"id": habit_id, "message": "New habit added successfully"}), 201
 
 @habits_bp.route('/<int:habit_id>', methods=['DELETE'])

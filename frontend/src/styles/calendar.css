@@ -1,0 +1,182 @@
+/* --- WEEK BAR --- */
+
+.week-bar {
+    margin-bottom: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1rem 1.5rem 0.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.week-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+}
+
+.week-bar-month {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.week-bar-monthview-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--accent);
+    padding: 0 0.5rem;
+}
+
+.week-bar-days {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.week-bar-arrow {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 0 0.5rem;
+}
+
+.week-bar-day {
+    background: none;
+    border: none;
+    border-radius: 50%;
+    width: 54px;
+    height: 54px;
+    font-size: 2.5rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    margin: 0 40px;
+}
+
+.week-bar-day.selected,
+.week-bar-day:focus {
+    background: var(--accent);
+    color: var(--bg-primary);
+    outline: none;
+}
+
+.week-bar-today-btn {
+    background: var(--accent);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 4px;
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin: 0 0.5rem;
+    padding: 0.3rem 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.week-bar-today-btn:hover {
+    background: #0097a7;
+}
+
+
+/* END OF WEEK BAR */
+
+/* ------------------------------------------ */
+
+/* --- MONTH VIEW --- */
+.month-view-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.month-view-content {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 2rem;
+    min-width: 320px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.2);
+    position: relative;
+    height: 35%;
+    width: 40%;
+}
+
+.month-view-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.month-view-header {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.month-view-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 36px);
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.month-view-dayname {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    text-align: center;
+    font-weight: 700;
+}
+
+.month-view-day {
+    background: none;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.month-view-day.selected,
+.month-view-day:focus {
+    background: var(--accent);
+    color: var(--bg-primary);
+    outline: none;
+}
+
+.month-view-empty {
+    width: 36px;
+    height: 36px;
+}
+
+/* END OF MONTH VIEW */
+
+/* ------------------------------------------ */

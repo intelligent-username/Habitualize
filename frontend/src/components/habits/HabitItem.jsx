@@ -1,10 +1,11 @@
 import React from "react";
+import Icon from "../ui/Icon";
 import { COLOR_OPTIONS, formatTime } from "../../utils/constants";
 import { useHabitTimer, useHabitCounters } from "../../hooks/useHabitControls.js";
 
 /**
  * HabitItem - Component for displaying and interacting with individual habits
- * Handles different habit types: binary, reverse_binary, timer, counter, entry
+ * Handles different habit types with a universal layout.
  */
 export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabled }) => {
     const colorHex = COLOR_OPTIONS.find(opt => opt.value === habit.color)?.hex || "#b0b0b0";
@@ -12,180 +13,88 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
 
     // Use custom hooks for state management
     const { timer, timerRunning, setTimerRunning, setTimer } = useHabitTimer(habit, toggleCompletion);
-    const { counterValue, entryValue, setEntryValue, entryTotal } = useHabitCounters(habit);
+    const { entryValue, setEntryValue } = useHabitCounters(habit);
 
-    let mainControl = null;
-    let withControls = false;
+    let habitControls = null;
+    const isSpecial = habit.type === "counter" || habit.type === "entry" || habit.type === "timer";
 
+    // --- Define controls based on habit type ---
     if (habit.type === "counter") {
-        withControls = true;
         const displayValue = `${habit.value || 0}/${habit.target_value || "?"}`;
-        mainControl = (
-            <>
-                <input
-                    type="checkbox"
-                    checked={habit.completed}
-                    onChange={e => {
-                        toggleCompletion(
-                            habit.id,
-                            e.target.checked,
-                            e.target.checked ? (habit.target_value || 1) : 0
-                        );
-                    }}
-                    style={{ marginRight: 16 }}
-                />
-                {!habit.completed && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "1.2rem" }}>
-                        <div className="counter-wheel">
-                            <button
-                                className="counter-wheel-btn"
-                                onClick={() => toggleCompletion(habit.id, false, 1)}
-                                tabIndex={0}
-                            >▲</button>
-                            <div className="counter-wheel-value">{habit.value || 0}</div>
-                            <button
-                                className="counter-wheel-btn"
-                                onClick={() => {
-                                    if ((habit.value || 0) > 0) {
-                                        toggleCompletion(habit.id, false, -1);
-                                    }
-                                }}
-                                tabIndex={0}
-                            >▼</button>
-                        </div>
-                        <span className="habit-progress-outline">
-                            {displayValue} completed
-                        </span>
-                    </div>
-                )}
-                {habit.completed && (
-                    <span className="habit-progress-outline">
-                        {displayValue} completed
-                    </span>
-                )}
-            </>
+        habitControls = (
+            <div className="habit-control-display counter-control">
+                <div className="counter-wheel">
+                    <button className="counter-wheel-btn" onClick={() => toggleCompletion(habit.id, false, 1)}>▲</button>
+                    <div className="counter-wheel-value">{habit.value || 0}</div>
+                    <button className="counter-wheel-btn" onClick={() => { if ((habit.value || 0) > 0) { toggleCompletion(habit.id, false, -1); } }}>▼</button>
+                </div>
+                <span className="habit-progress-outline">{displayValue}</span>
+            </div>
         );
     } else if (habit.type === "entry") {
-        withControls = true;
         const displayValue = `${habit.value || 0}/${habit.target_value || "?"}`;
-        mainControl = (
-            <>
+        habitControls = (
+            <div className="habit-control-display entry-control">
                 <input
-                    type="checkbox"
-                    checked={habit.completed}
-                    onChange={e => {
-                        toggleCompletion(
-                            habit.id,
-                            e.target.checked,
-                            e.target.checked ? (habit.target_value || 1) : 0
-                        );
+                    className="entry-input"
+                    type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={entryValue}
+                    onChange={e => setEntryValue(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="Val"
+                    onKeyDown={e => {
+                        if (e.key === "Enter") {
+                            const addVal = Number(entryValue) || 0;
+                            setEntryValue("");
+                            if (addVal > 0) toggleCompletion(habit.id, false, addVal);
+                        }
                     }}
-                    style={{ marginRight: 16 }}
                 />
-                {!habit.completed && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "1.2rem" }}>
-                        <input
-                            className="entry-input"
-                            type="number"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={entryValue}
-                            onChange={e => setEntryValue(e.target.value.replace(/[^0-9]/g, ""))}
-                            placeholder="Enter value"
-                            onKeyDown={e => {
-                                if (e.key === "Enter") {
-                                    const addVal = Number(entryValue) || 0;
-                                    setEntryValue("");
-                                    if (addVal > 0) {
-                                        toggleCompletion(habit.id, false, addVal);
-                                    }
-                                }
-                            }}
-                        />
-                        <button
-                            className="timer-btn"
-                            style={{ background: "var(--success)" }}
-                            onClick={() => {
-                                const addVal = Number(entryValue) || 0;
-                                setEntryValue("");
-                                if (addVal > 0) {
-                                    toggleCompletion(habit.id, false, addVal);
-                                }
-                            }}
-                        >
-                            Add
-                        </button>
-                        <span className="habit-progress-outline">
-                            {displayValue} completed
-                        </span>
-                    </div>
-                )}
-                {habit.completed && (
-                    <span className="habit-progress-outline">
-                        {displayValue} completed
-                    </span>
-                )}
-            </>
+                <button
+                    className="entry-submit-btn"
+                    onClick={() => {
+                        const addVal = Number(entryValue) || 0;
+                        setEntryValue("");
+                        if (addVal > 0) toggleCompletion(habit.id, false, addVal);
+                    }}
+                >Add</button>
+                <span className="habit-progress-outline">{displayValue}</span>
+            </div>
         );
     } else if (habit.type === "timer") {
-        withControls = true;
-        mainControl = (
-            <>
-                <input
-                    type="checkbox"
-                    checked={habit.completed}
-                    onChange={e => {
-                        setTimer(0);
-                        setTimerRunning(false);
-                        toggleCompletion(habit.id, e.target.checked, e.target.checked ? timer : 0);
-                    }}
-                    style={{ marginRight: 16 }}
-                />
-                {!habit.completed ? (
-                    <div className="timer-box">
-                        <button
-                            className="timer-btn"
-                            onClick={() => setTimerRunning(r => !r)}
-                        >
-                            {timerRunning ? "Pause" : "Start"}
-                        </button>
-                        <span className="timer-display">
-                            {formatTime(timer)}
-                        </span>
-                        <span className="habit-progress-outline">
-                            {formatTime(habit.target_value || 0)} target
-                        </span>
-                    </div>
-                ) : (
-                    <span className="habit-progress-outline">
-                        {formatTime(habit.target_value || timer)} target
-                    </span>
-                )}
-            </>
-        );
-    } else if (habit.type === "reverse_binary") {
-        mainControl = (
-            <input
-                type="checkbox"
-                checked={habit.completed}
-                onChange={e => toggleCompletion(habit.id, e.target.checked)}
-            />
-        );
-    } else {
-        mainControl = (
-            <input
-                type="checkbox"
-                checked={habit.completed}
-                onChange={e => toggleCompletion(habit.id, e.target.checked)}
-            />
+        habitControls = (
+            <div className="habit-control-display timer-control">
+                <button className="timer-btn" onClick={() => setTimerRunning(r => !r)}>
+                    {timerRunning ? "Pause" : "Start"}
+                </button>
+                <span className="timer-display">{formatTime(timer)}</span>
+                <span className="habit-progress-outline">{formatTime(habit.target_value || 0)}</span>
+            </div>
         );
     }
 
+    // --- Universal checkbox handler ---
+    const handleCheckboxChange = (e) => {
+        const isChecked = e.target.checked;
+        let valueToLog = isChecked ? 1 : 0; // Default for binary
+
+        if (habit.type === "timer") {
+            setTimer(0);
+            setTimerRunning(false);
+            valueToLog = isChecked ? timer : 0;
+        } else if (habit.type === "counter" || habit.type === "entry") {
+            valueToLog = isChecked ? (habit.target_value || 1) : 0;
+        }
+        
+        toggleCompletion(habit.id, isChecked, valueToLog);
+    };
+
     return (
         <li
-            className={`habit${habit.completed ? " completed" : ""}${withControls ? " with-controls" : ""}${disabled ? " habit-disabled" : ""}`}
+            className={`habit${habit.completed ? " completed" : ""}${disabled ? " habit-disabled" : ""}`}
             style={{
-                backgroundColor: habit.completed ? "#f0f0f0" : colorHex,
+                backgroundColor: habit.completed ? "var(--bg-tertiary)" : colorHex,
                 color: textColor,
                 borderLeft: `10px solid ${colorHex}`,
                 transition: "background-color 0.3s, opacity 0.3s",
@@ -194,11 +103,27 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
                 filter: disabled ? "grayscale(0.7)" : "none"
             }}
         >
-            {mainControl}
+            <Icon iconName={habit.icon} className="habit-icon" alt={`${habit.name} icon`} />
             <span className="habit-name">{habit.name}</span>
-            {habit.date_created && <span className="habit-date">(Created: {habit.date_created})</span>}
-            <button onClick={() => onEdit(habit)} style={{ marginLeft: "1rem" }}>Edit</button>
-            <button onClick={() => deleteHabit(habit)} style={{ marginLeft: "0.5rem" }}>Delete</button>
+            <div className="habit-right-grid">
+                <button onClick={() => onEdit(habit)} className="habit-action-btn habit-edit-btn" title="Edit">
+                  <span role="img" aria-label="Edit">🖉</span>
+                </button>
+                <button onClick={() => deleteHabit(habit)} className="habit-action-btn habit-delete-btn" title="Delete">
+                  <span role="img" aria-label="Delete">🗑️</span>
+                </button>
+                <input
+                    type="checkbox"
+                    className="habit-checkbox"
+                    checked={habit.completed}
+                    onChange={handleCheckboxChange}
+                />
+                {isSpecial && (
+                    <div className="habit-controls">
+                        {habitControls}
+                    </div>
+                )}
+            </div>
         </li>
     );
 };

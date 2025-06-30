@@ -60,7 +60,8 @@ export const useHabitFormSubmission = ({
             sequenceTimers,
             subsequenceTimers,
             cumulativePeriod,
-            cumulativeGoal
+            cumulativeGoal,
+            icon // <-- add icon to destructure
         } = formData;
 
         if (editingSequence) {
@@ -69,19 +70,21 @@ export const useHabitFormSubmission = ({
                 const existingStep = editingSequence.steps[idx]; // May be undefined for new habits
                 if (h.type === "timer") {
                     return {
-                        ...(existingStep || {}), // Only spread if existingStep exists
+                        ...(existingStep || {}),
                         name: h.name,
                         type: h.type,
                         target_value: sequenceTimers[idx].h * 3600 + sequenceTimers[idx].m * 60 + sequenceTimers[idx].s,
-                        step_order: idx // Ensure step_order is set
+                        step_order: idx,
+                        icon: h.icon || icon // <-- support icon for steps
                     };
                 }
                 return {
-                    ...(existingStep || {}), // Only spread if existingStep exists
+                    ...(existingStep || {}),
                     name: h.name,
                     type: h.type,
                     target_value: h.target_value,
-                    step_order: idx // Ensure step_order is set
+                    step_order: idx,
+                    icon: h.icon || icon // <-- support icon for steps
                 };
             });
 
@@ -104,7 +107,8 @@ export const useHabitFormSubmission = ({
                     cumulative_goal: cumulativeGoal,
                     cumulative_period: cumulativePeriod,
                     color,
-                    category_id: categoryId
+                    category_id: categoryId,
+                    icon // <-- include icon
                 });
                 return;
             } else {
@@ -121,7 +125,8 @@ export const useHabitFormSubmission = ({
                     type,
                     target_value: finalTargetValue,
                     color,
-                    category_id: categoryId
+                    category_id: categoryId,
+                    icon // <-- include icon
                 });
                 return;
             }
@@ -131,22 +136,27 @@ export const useHabitFormSubmission = ({
             if (type === "timer") {
                 let finalTargetValue;
                 if (isMobile()) {
-                    // Mobile: use timer picker values
                     finalTargetValue = timerHours * 3600 + timerMinutes * 60 + timerSeconds;
                 } else {
-                    // Desktop: use direct input value (already in seconds)
                     finalTargetValue = Number(targetValue) || 0;
                 }
-                console.log("[HabitForm] Creating timer habit with target:", finalTargetValue, "seconds");
                 addHabit({
                     name: newHabit,
                     color,
                     category_id: categoryId,
                     type,
-                    target_value: finalTargetValue
+                    target_value: finalTargetValue,
+                    icon // <-- include icon
                 });
             } else {
-                addHabit(targetValue);
+                addHabit({
+                    name: newHabit,
+                    color,
+                    category_id: categoryId,
+                    type,
+                    target_value: targetValue,
+                    icon // <-- include icon
+                });
             }
         } else if (habitKind === "sequence") {
             // For each habit, if timer, use sequenceTimers for value
@@ -154,7 +164,8 @@ export const useHabitFormSubmission = ({
                 if (h.type === "timer") {
                     return {
                         ...h,
-                        target_value: sequenceTimers[idx].h * 3600 + sequenceTimers[idx].m * 60 + sequenceTimers[idx].s
+                        target_value: sequenceTimers[idx].h * 3600 + sequenceTimers[idx].m * 60 + sequenceTimers[idx].s,
+                        icon: h.icon || icon // <-- support icon for steps
                     };
                 }
                 // For subsequence
@@ -163,14 +174,15 @@ export const useHabitFormSubmission = ({
                         if (sub.type === "timer") {
                             return {
                                 ...sub,
-                                target_value: subsequenceTimers[idx][subIdx].h * 3600 + subsequenceTimers[idx][subIdx].m * 60 + subsequenceTimers[idx][subIdx].s
+                                target_value: subsequenceTimers[idx][subIdx].h * 3600 + subsequenceTimers[idx][subIdx].m * 60 + subsequenceTimers[idx][subIdx].s,
+                                icon: sub.icon || icon // <-- support icon for subhabits
                             };
                         }
-                        return sub;
+                        return { ...sub, icon: sub.icon || icon };
                     });
-                    return { ...h, subHabits: subHabitsWithTimers };
+                    return { ...h, subHabits: subHabitsWithTimers, icon: h.icon || icon };
                 }
-                return h;
+                return { ...h, icon: h.icon || icon };
             });
             createMultiStepSequence({
                 name: newHabit,
@@ -187,7 +199,8 @@ export const useHabitFormSubmission = ({
                 type: "binary",
                 cumulative: 1,
                 cumulative_goal: cumulativeGoal,
-                cumulative_period: cumulativePeriod
+                cumulative_period: cumulativePeriod,
+                icon // <-- include icon
             });
         }
     };

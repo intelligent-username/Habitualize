@@ -146,9 +146,16 @@ def _execute_database_updates(habit_id, merged_data, original_payload):
     """
     # 1. Update the habit itself
     params_for_habit_update = (
-        merged_data['name'], merged_data['type'], merged_data['target_value'],
-        merged_data['cumulative'], merged_data['cumulative_goal'], merged_data['cumulative_period'],
-        merged_data['sequence_id'], merged_data['step_order'], habit_id
+        merged_data.get('name'), 
+        merged_data.get('type'), 
+        merged_data.get('target_value'),
+        merged_data.get('cumulative'), 
+        merged_data.get('cumulative_goal'), 
+        merged_data.get('cumulative_period'),
+        merged_data.get('sequence_id'), 
+        merged_data.get('step_order'), 
+        merged_data.get('icon', current_app.config.get('DEFAULT_ICON', 'default.svg')), 
+        habit_id
     )
     current_app.logger.info(f"Executing update for habit {habit_id} with SQL: '{UPDATE_HABIT.strip()}' and params: {params_for_habit_update}")
     run_query(UPDATE_HABIT, params=params_for_habit_update)

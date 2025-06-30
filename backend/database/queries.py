@@ -4,20 +4,20 @@
 # --------------------------
 FETCH_HABITS_BY_SEQUENCE_ID = """
         SELECT id, sequence_id, step_order, name, type, target_value,
-        date_created, cumulative, cumulative_goal, cumulative_period
+        date_created, cumulative, cumulative_goal, cumulative_period, icon
         FROM habits WHERE sequence_id = ? 
         ORDER BY step_order ASC
 """
 
 FETCH_HABITS_IN_SEQUENCE = """
         SELECT id, step_order, name, type, target_value, cumulative, 
-        cumulative_goal, cumulative_period FROM habits 
+        cumulative_goal, cumulative_period, icon FROM habits 
         WHERE sequence_id = ? ORDER BY step_order ASC
 """
 
 FETCH_UPDATED_HAB =  """
         SELECT name, type, target_value, cumulative, cumulative_goal, 
-        cumulative_period, sequence_id, step_order 
+        cumulative_period, sequence_id, step_order, icon 
         FROM habits WHERE id = ?
 """
 
@@ -57,8 +57,8 @@ FETCH_SEQ_DATA = "SELECT color, category_id FROM sequences WHERE id = ?"
 MAKE_HABIT = """
 INSERT INTO habits (
     sequence_id, step_order, name, type, target_value, 
-    date_created, cumulative, cumulative_goal, cumulative_period
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    date_created, cumulative, cumulative_goal, cumulative_period, icon
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 MAKE_CATEGORY = "INSERT INTO categories (name) VALUES (?)"
@@ -87,7 +87,7 @@ DEL_CAT = "DELETE FROM categories WHERE id = ?"
 # --------------------------
 UPDATE_HABIT = """UPDATE habits 
         SET name = ?, type = ?, target_value = ?, cumulative = ?, 
-            cumulative_goal = ?, cumulative_period = ?, sequence_id = ?, step_order = ?
+            cumulative_goal = ?, cumulative_period = ?, sequence_id = ?, step_order = ?, icon = ?
         WHERE id = ?
 """
 

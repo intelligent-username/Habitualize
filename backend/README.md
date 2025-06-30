@@ -79,10 +79,10 @@ The application uses SQLite with the following table structure:
                                                      │ cumulative_period   │     │
                                                      └─────────────────────┘     │
                                                                                  │
-                          ┌──────────────────┐                                  │
-                          │  habit_history   │                                  │
-                          ├──────────────────┤                                  │
-                          │ habit_id (FK)    │──────────────────────────────────┘
+                          ┌──────────────────┐                                   │
+                          │  habit_history   │                                   │
+                          ├──────────────────┤                                   │
+                          │ habit_id (FK)    │───────────────────────────────────┘
                           │ date (PK)        │
                           │ completed        │
                           │ value            │

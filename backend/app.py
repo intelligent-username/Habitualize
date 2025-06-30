@@ -17,6 +17,7 @@ from routes.placeholders import settings_bp, pomodoro_bp, quote_bp, analytics_bp
 
 app = Flask(__name__)
 app.config['DATABASE'] = 'data.db'
+app.config['DEFAULT_ICON'] = 'default.svg'
 CORS(app)
 
 # # Configure logging

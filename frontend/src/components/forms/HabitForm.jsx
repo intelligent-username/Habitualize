@@ -8,6 +8,7 @@ import { CategorySelector } from "../categories";
 import HabitTypeSelector from "./HabitTypeSelector.jsx";
 import SequenceForm from "./SequenceForm.jsx";
 import CumulativeForm from "./CumulativeForm.jsx";
+import IconPicker from "../ui/IconPicker";
 
 /**
  * HabitForm - Component for creating and editing habits and sequences
@@ -29,6 +30,7 @@ export const HabitForm = ({
     // Form state
     const [newHabit, setNewHabit] = useState("");
     const [color, setColor] = useState("gray");
+    const [icon, setIcon] = useState("default.svg"); // Add icon state
     const [categoryId, setCategoryId] = useState(initialCategoryId);
     const [type, setType] = useState("binary");
     const [targetValue, setTargetValue] = useState("");
@@ -102,6 +104,7 @@ export const HabitForm = ({
             setNewHabit(editingSequence.name);
             setColor(editingSequence.color);
             setCategoryId(editingSequence.category_id);
+            // NOTE: Sequence-level icons are not supported in this implementation
             setSequenceCount(editingSequence.steps.length);
             setSequenceHabits(editingSequence.steps.map(h => ({
                 name: h.name,
@@ -128,6 +131,7 @@ export const HabitForm = ({
                 setHabitKind("cumulative");
                 setNewHabit(editingHabit.name);
                 setColor(editingHabit.color || "gray");
+                setIcon(editingHabit.icon || "default.svg"); // Set icon
                 setCategoryId(editingHabit.category_id || 1);
                 setCumulativeGoal(editingHabit.cumulative_goal || "");
                 setCumulativePeriod(editingHabit.cumulative_period || "monthly");
@@ -137,6 +141,7 @@ export const HabitForm = ({
                 setType(editingHabit.type || "binary");
                 setTargetValue(editingHabit.target_value || "");
                 setColor(editingHabit.color || "gray");
+                setIcon(editingHabit.icon || "default.svg"); // Set icon
                 setCategoryId(editingHabit.category_id || 1);
                 
                 // Initialize timer values for timer habits
@@ -288,39 +293,16 @@ export const HabitForm = ({
     };
 
     // --- SUBMIT LOGIC ---
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (editingSequence) {
-            // For each habit, if timer, use sequenceTimers for value
-            const steps = sequenceHabits.map((h, idx) => {
-                const existingStep = editingSequence.steps[idx]; // May be undefined for new habits
-                if (h.type === "timer") {
-                    return {
-                        ...(existingStep || {}), // Only spread if existingStep exists
-                        name: h.name,
-                        type: h.type,
-                        target_value: sequenceTimers[idx].h * 3600 + sequenceTimers[idx].m * 60 + sequenceTimers[idx].s,
-                        step_order: idx // Ensure step_order is set
-                    };
-                }
-                return {
-                    ...(existingStep || {}), // Only spread if existingStep exists
-                    name: h.name,
-                    type: h.type,
-                    target_value: h.target_value,
-                    step_order: idx // Ensure step_order is set
-                };
-            });
-
-            handleUpdateSequence({
-                name: newHabit,
-                color,
-                category_id: categoryId,
-                steps
-            });
-            return;
-        }
+        // Centralized payload for single habits (normal or cumulative)
+        const habitPayload = {
+            name: newHabit,
+            color,
+            category_id: categoryId,
+            icon, // Add icon to payload
+        };
 
         if (editingHabit) {
             // If editing a cumulative habit, update with cumulative fields
@@ -332,7 +314,8 @@ export const HabitForm = ({
                     cumulative_goal: cumulativeGoal,
                     cumulative_period: cumulativePeriod,
                     color,
-                    category_id: categoryId
+                    category_id: categoryId,
+                    icon
                 });
                 return;
             } else {
@@ -351,7 +334,8 @@ export const HabitForm = ({
                     type,
                     target_value: finalTargetValue,
                     color,
-                    category_id: categoryId
+                    category_id: categoryId,
+                    icon
                 });
                 return;
             }
@@ -443,6 +427,10 @@ export const HabitForm = ({
                 <option value="sequence">Sequence (routine/group)</option>
                 <option value="cumulative">Cumulative (weekly/monthly/yearly goal)</option>
             </select>
+
+            {/* Icon picker */}
+            <label className="habit-form-label" style={{ marginTop: "1rem" }}>Icon</label>
+            <IconPicker selectedIcon={icon} onSelect={setIcon} />
 
             {/* Color and Category components */}
             <ColorPicker

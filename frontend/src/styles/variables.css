@@ -1,0 +1,26 @@
+/* --- COLOR VARIABLES --- */
+:root {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --accent: #00bcd4;
+    --border: #333333;
+    --success: #4caf50;
+    --danger: #f44336;
+    --gray: #9e9e9e;
+    --light_blue: #4fc3f7;
+    --dark_blue: #1565c0;
+    --yellow: #ffeb3b;
+    --orange: #ff9800;
+    --red: #e53935;
+    --dark_gray: #616161;
+    --purple: #7e57c2;
+    --green: #66bb6a;
+    --pink: #ec407a;
+    --gold: #ffc107;
+    /* Sidebar specific variables */
+    --sidebar-width: 280px;
+    --sidebar-bg: #1a1a1a;
+    --sidebar-border: rgba(0, 188, 212, 0.2);
+}

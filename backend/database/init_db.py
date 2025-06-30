@@ -7,6 +7,8 @@ Expand as needed
 import sqlite3
 from flask import current_app
 
+
+
 def init_db():
     path = current_app.config['DATABASE']
     conn = sqlite3.connect(path)
@@ -43,6 +45,7 @@ def init_db():
             cumulative INTEGER DEFAULT 0,
             cumulative_goal REAL,
             cumulative_period TEXT,
+            icon TEXT DEFAULT 'default.svg',
             FOREIGN KEY (sequence_id) REFERENCES sequences(id)
         )
     ''')
@@ -57,10 +60,24 @@ def init_db():
             FOREIGN KEY (habit_id) REFERENCES habits (id)
         )
     ''')
-    # Migration: add value column if missing
-    try:
-        c.execute("ALTER TABLE habit_history ADD COLUMN value REAL DEFAULT 0;")
-    except Exception:
-        pass
     conn.commit()
-    conn.close()
+
+# def run_migrations(conn):
+#     c = conn.cursor()
+#     # Migration: add icon column to habits if missing
+#     try:
+#         c.execute("ALTER TABLE habits ADD COLUMN icon TEXT DEFAULT 'default.svg'")
+#     except sqlite3.OperationalError:
+#         pass  # Column already exists
+#     # Migration: add value column to habit_history if missing
+#     try:
+#         c.execute("ALTER TABLE habit_history ADD COLUMN value REAL DEFAULT 0;")
+#     except sqlite3.OperationalError:
+#         pass  # Column already exists
+
+# if __name__ == '__main__':
+#     path = '..data.db'
+#     conn = sqlite3.connect(path)
+#     run_migrations(conn)
+#     conn.commit()
+#     conn.close()

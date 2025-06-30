@@ -1,0 +1,102 @@
+/* Sequence/Cumulative */
+.sequence-habit {
+    background: var(--bg-secondary);
+    border-left: 10px solid var(--accent);
+    border-radius: 8px;
+    margin-bottom: 1.2rem;
+    padding: 24px 32px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.2s;
+}
+.sequence-habit.completed {
+    opacity: 0.7;
+}
+.sequence-children {
+    margin-top: 1rem;
+    margin-left: 2.5rem;
+    border-left: 3px dashed var(--accent);
+    padding-left: 1.5rem;
+    list-style: none;
+    padding: 0 0 0 1.5rem;
+    margin: 1rem 0 0 2.5rem;
+}
+.cumulative-progress-outline {
+    font-size: 1.05rem;
+    color: #fff;
+    outline: 2px solid var(--success);
+    border-radius: 6px;
+    padding: 2px 12px;
+    background: rgba(76,175,80,0.13);
+    margin-left: 2.5rem;
+    font-weight: 500;
+}
+
+/* Sequence form styling */
+.sequence-count-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.sequence-count-input {
+    width: 60px;
+    padding: 8px;
+    font-size: 1.1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.sequence-habit-row {
+    margin-bottom: 10px;
+    margin-left: 10px;
+    border-left: 2px solid var(--accent);
+    padding-left: 10px;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.sequence-target-input {
+    margin-top: 6px;
+    width: 100px;
+    padding: 6px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.add-subsequence-btn {
+    margin-left: 10px;
+    font-size: 0.98rem;
+    background: var(--accent);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.add-subsequence-btn:hover {
+    background: #0097a7;
+}
+.subsequence-row {
+    margin-top: 8px;
+    margin-left: 16px;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    padding: 8px;
+}
+.subsequence-habit-row {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}

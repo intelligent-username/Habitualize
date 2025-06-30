@@ -1,0 +1,76 @@
+/* --- ICON PICKER --- */
+.icon-picker {
+    position: relative;
+}
+
+.icon-picker-button {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+}
+
+.selected-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-list-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 100;
+    margin-top: 5px;
+    padding: 1rem;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.icon-list {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.8rem;
+}
+
+.icon-item {
+    cursor: pointer;
+    padding: 0.8rem;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+}
+
+.icon-item:hover {
+    background-color: #f0f0f0;
+    border-color: var(--accent);
+}
+
+.icon-item img {
+    width: 40px;
+    height: 40px;
+}
+
+.habit-icon {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 40px;
+    height: 40px;
+    margin-right: 1.5rem;
+    flex-shrink: 0;
+}
+

@@ -41,10 +41,13 @@ const CategoryModal = ({ onClose }) => {
                     value={renameCategoryName}
                     onChange={e => setRenameCategoryName(e.target.value)}
                     style={{ marginRight: "0.5rem", flex: 1 }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleRenameCategory();
+                    }}
                   />
                   <div className="category-list-actions">
                     <button onClick={handleRenameCategory}>Save</button>
-                    <button onClick={() => setRenameCategoryId(null)}>Cancel</button>
+                    <button onClick={() => setRenameCategoryId(null)}>Close</button>
                   </div>
                 </>
               ) : (
@@ -61,7 +64,6 @@ const CategoryModal = ({ onClose }) => {
             </li>
           ))}
         </ul>
-        <button className="modal-close-btn" onClick={onClose} style={{marginTop: '1rem'}}>Close</button>
       </div>
     </Modal>
   );

@@ -6,7 +6,7 @@ Mainly Serialization (for now); turns rows into JSON dictionaries.
 # Key lists for serialization
 _HABIT_KEYS = [
     "id", "sequence_id", "step_order", "name", "type", "target_value",
-    "date_created", "cumulative", "cumulative_goal", "cumulative_period"
+    "date_created", "cumulative", "cumulative_goal", "cumulative_period", "icon"
 ]
 
 _SEQUENCE_KEYS = [
@@ -19,7 +19,7 @@ _CATEGORY_KEYS = ["id", "name"]
 
 _HYDRATED_HABIT_STEP_KEYS = [
     "id", "step_order", "name", "type", "target_value",
-    "cumulative", "cumulative_goal", "cumulative_period"
+    "cumulative", "cumulative_goal", "cumulative_period", "icon"
 ]
 
 
