@@ -1,0 +1,129 @@
+.page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 80vh;
+  padding: 3rem 1rem 2rem 1rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 2rem;
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25), 0 1.5px 6px 0 rgba(0,0,0,0.10);
+  backdrop-filter: blur(2.5px);
+  border: 1.5px solid var(--border);
+  margin: 40px auto;
+  max-width: 1200px;
+  width: 90vw;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+
+.settings-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.settings-section {
+  background: var(--bg-primary);
+  border-radius: 1rem;
+  padding: 1.5rem 1.2rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
+}
+
+.settings-section h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  color: var(--text-primary);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 1.1rem;
+}
+
+.settings-row label {
+  min-width: 160px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.settings-row input[type="color"] {
+  border: none;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 0.5rem;
+  background: none;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.07);
+}
+
+.settings-row input,
+.settings-row select {
+  flex: 1;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border 0.2s;
+}
+
+.settings-row input:focus,
+.settings-row select:focus {
+  border: 1.5px solid var(--accent);
+  outline: none;
+}
+
+.settings-btn {
+  padding: 0.5rem 1.2rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: linear-gradient(90deg, #7f9cf5 0%, #38b2ac 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-right: 0.7rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.07);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.settings-btn.primary {
+  background: linear-gradient(90deg, #4f8cff 0%, #38b2ac 100%);
+}
+
+.settings-btn.danger {
+  background: linear-gradient(90deg, #ff5858 0%, #ffb199 100%);
+}
+
+.settings-btn:active {
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.10);
+}
+
+.settings-info {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-left: 1rem;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}

@@ -11,7 +11,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import SettingsPage from './pages/SettingsPage.jsx';
 import PomodoroPage from './pages/PomodoroPage.jsx';
 import QuoteOfTheDayPage from './pages/QuoteOfTheDayPage.jsx';
-import PlaceholderCard from './components/ui/PlaceholderCard';
+import AnalyticsPage from './pages/AnalyticsPage.jsx';
 
 const Dashboard = ({
     selectedDate,
@@ -114,10 +114,10 @@ const App = () => {
                         handleCloseMonthView={handleCloseMonthView}
                     />
                 } />
-                <Route path="/settings" element={<PlaceholderCard title="Settings" description="Settings page placeholder. Configure  preferences." info="User: Habit Builder" />} />
-                <Route path="/pomodoro" element={<PlaceholderCard title="Pomodoro" description="Pomodoro Placeholder (for now)." info="Pomodoro Timer Coming Soon" />} />
-                <Route path="/quote-of-the-day" element={<PlaceholderCard title="Quote of the Day" description="Placeholder." info="Coming Soon" />} />
-                <Route path="/analytics" element={<PlaceholderCard title="Analytics" description="Visualize Progress w/ Analytics." extra="Coming soon" />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/pomodoro" element={<PomodoroPage />} />
+                <Route path="/quote-of-the-day" element={<QuoteOfTheDayPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
             </Routes>
         </Router>
     );

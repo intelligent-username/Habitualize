@@ -13,7 +13,8 @@ from database.init_db import init_db
 from routes.categories import categories_bp
 from routes.sequences import sequences_bp
 from routes.habits import habits_bp
-from routes.placeholders import settings_bp, pomodoro_bp, quote_bp, analytics_bp
+from routes.placeholders import settings_bp, quote_bp, analytics_bp
+from routes.pomodoro import pomodoro_bp
 
 app = Flask(__name__)
 app.config['DATABASE'] = 'data.db'

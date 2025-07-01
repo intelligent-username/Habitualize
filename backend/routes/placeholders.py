@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
-pomodoro_bp = Blueprint('pomodoro', __name__, url_prefix='/pomodoro')
 quote_bp = Blueprint('quote', __name__, url_prefix='/quote-of-the-day')
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/analytics')
 
@@ -14,16 +13,6 @@ def get_settings():
 def update_settings():
     # Placeholder for updating settings
     return jsonify({"message": "Settings update endpoint (not implemented)"}), 501
-
-# Pomodoro API
-@pomodoro_bp.route('/', methods=['GET'])
-def get_pomodoro():
-    return jsonify({"page": "Pomodoro", "message": "Pomodoro placeholder"})
-
-@pomodoro_bp.route('/start', methods=['POST'])
-def start_pomodoro():
-    # Placeholder for starting a pomodoro session
-    return jsonify({"message": "Start pomodoro endpoint (not implemented)"}), 501
 
 # Quote of the Day API
 @quote_bp.route('/', methods=['GET'])

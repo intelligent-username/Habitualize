@@ -2,11 +2,13 @@
 @import './styles/sidebar.css';
 @import './styles/base.css';
 @import './styles/habit.css';
+@import './styles/sequence.css';
+@import './styles/cumulative.css';
 @import './styles/category.css';
 @import './styles/calendar.css';
 @import './styles/modal.css';
-@import './styles/sequence.css';
 @import './styles/icons.css';
+
 
 /* --- GLOBAL/UNIVERSAL STYLES (keep here) --- */
 body {

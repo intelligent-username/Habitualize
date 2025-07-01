@@ -1,0 +1,13 @@
+/* Cumulative */
+
+.cumulative-progress-outline {
+    font-size: 1.05rem;
+    color: #fff;
+    outline: 2px solid var(--success);
+    border-radius: 6px;
+    padding: 2px 12px;
+    background: rgba(76,175,80,0.13);
+    margin-left: 2.5rem;
+    font-weight: 500;
+}
+

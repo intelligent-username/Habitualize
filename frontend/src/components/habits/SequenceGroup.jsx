@@ -27,13 +27,6 @@ const SequenceGroup = ({
   return (
     <div className="sequence-group">
       <div className="sequence-label">{sequence.name}</div>
-      <button
-        className="edit-sequence-btn"
-        style={{ marginBottom: "0.7rem", marginLeft: "1rem", background: "var(--accent)", color: "var(--bg-primary)", border: "none", borderRadius: "6px", padding: "6px 18px", fontWeight: 600, fontSize: "1.05rem", cursor: "pointer" }}
-        onClick={() => onEditSequence(sequence)}
-      >
-        Edit Sequence
-      </button>
       <ul className="sequence-children">
         {sequence.steps.map((habit, idx) => {
           const firstIncompleteIdx = sequence.steps.findIndex(h => !h.completed);
@@ -59,6 +52,12 @@ const SequenceGroup = ({
           );
         })}
       </ul>
+      <button
+        className="edit-sequence-btn"
+        onClick={() => onEditSequence(sequence)}
+      >
+        Edit Sequence
+      </button>
       <button className="delete-sequence-btn" onClick={() => onDeleteSequence(sequence.id)}>
         Delete Sequence
       </button>
