@@ -60,6 +60,17 @@ def init_db():
             FOREIGN KEY (habit_id) REFERENCES habits (id)
         )
     ''')
+
+    # Pomodoro tracking table
+    c.execute('''
+            CREATE TABLE IF NOT EXISTS pomodoro_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                duration_minutes INTEGER NOT NULL,
+                time_started TEXT NOT NULL,
+                time_finished TEXT,
+                completed BOOLEAN NOT NULL
+            );
+            ''')
     conn.commit()
 
 # def run_migrations(conn):
