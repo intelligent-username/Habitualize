@@ -65,30 +65,11 @@ def init_db():
     c.execute('''
             CREATE TABLE IF NOT EXISTS pomodoro_sessions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                duration_minutes INTEGER NOT NULL,
+                goal_duration_minutes INTEGER NOT NULL,
                 time_started TEXT NOT NULL,
                 time_finished TEXT,
-                completed BOOLEAN NOT NULL
+                completed BOOLEAN NOT NULL,
+                time_completed REAL
             );
             ''')
     conn.commit()
-
-# def run_migrations(conn):
-#     c = conn.cursor()
-#     # Migration: add icon column to habits if missing
-#     try:
-#         c.execute("ALTER TABLE habits ADD COLUMN icon TEXT DEFAULT 'default.svg'")
-#     except sqlite3.OperationalError:
-#         pass  # Column already exists
-#     # Migration: add value column to habit_history if missing
-#     try:
-#         c.execute("ALTER TABLE habit_history ADD COLUMN value REAL DEFAULT 0;")
-#     except sqlite3.OperationalError:
-#         pass  # Column already exists
-
-# if __name__ == '__main__':
-#     path = '..data.db'
-#     conn = sqlite3.connect(path)
-#     run_migrations(conn)
-#     conn.commit()
-#     conn.close()

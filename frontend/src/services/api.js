@@ -129,6 +129,23 @@ class ApiService {
     async getHabitHistory(id) {
         return this.request(`/habits/${id}/history`);
     }
+
+    // Pomodoro operations
+    async startPomodoroSession(goal_duration_minutes) {
+        return this.request('/api/pomodoro/start', {
+            method: 'POST',
+            body: JSON.stringify({ goal_duration_minutes, time_started: new Date().toISOString() })
+        });
+    }
+    async finishPomodoroSession(session_id, completed, time_completed) {
+        return this.request('/api/pomodoro/finish', {
+            method: 'POST',
+            body: JSON.stringify({ session_id, time_finished: new Date().toISOString(), completed, time_completed })
+        });
+    }
+    async getPomodoroStats(range = 'today') {
+        return this.request(`/api/pomodoro/stats?range=${range}`);
+    }
 }
 
 export default new ApiService();

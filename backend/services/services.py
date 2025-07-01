@@ -312,3 +312,36 @@ def get_hydrated_sequence(sequence_id, date):
     hydrated_sequence_with_steps = _hydrate_sequence_with_progress(hydrated_sequence, date)
     
     return hydrated_sequence_with_steps, None, None # No error, status code
+
+
+# Pomodoro session DB logic
+
+def insert_pomodoro_session(goal_duration_minutes, time_started):
+    from database.connection import get_db
+    from database.queries import MAKE_POMODORO_SESSION
+    db = get_db()
+    cur = db.cursor()
+    cur.execute(MAKE_POMODORO_SESSION, (goal_duration_minutes, time_started, False))
+    db.commit()
+    return cur.lastrowid
+
+def finish_pomodoro_session(session_id, time_finished, completed, time_completed=None):
+    from database.connection import get_db
+    from database.queries import FINISH_POMODORO_SESSION
+    db = get_db()
+    db.execute(FINISH_POMODORO_SESSION, (time_finished, completed, time_completed, session_id))
+    db.commit()
+
+def get_pomodoro_stats(range_type):
+    from database.connection import get_db
+    from database.queries import FETCH_POMODORO_STATS
+    db = get_db()
+    if range_type == 'today':
+        cur = db.execute(FETCH_POMODORO_STATS, ('localtime',))
+    elif range_type == 'week':
+        cur = db.execute("SELECT * FROM pomodoro_sessions WHERE date(time_started) >= date('now', 'localtime', '-6 days')")
+    elif range_type == 'month':
+        cur = db.execute("SELECT * FROM pomodoro_sessions WHERE strftime('%Y-%m', time_started) = strftime('%Y-%m', 'now', 'localtime')")
+    else:
+        cur = db.execute("SELECT * FROM pomodoro_sessions")
+    return [dict(row) for row in cur.fetchall()]

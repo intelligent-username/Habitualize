@@ -26,20 +26,28 @@ const PomodoroPage = () => {
   const [longBreak, setLongBreak] = useState(saved.long);
   const [timer, setTimer] = useState(saved.work * 60);
   const [isRunning, setIsRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [stats, setStats] = useState(null);
+  const [weekStats, setWeekStats] = useState(null);
+  const [monthStats, setMonthStats] = useState(null);
   const intervalRef = useRef(null);
 
   // Update timer when mode or durations change
   useEffect(() => {
-    if (!isRunning) {
+    if (!isRunning && !isPaused) {
       if (mode === "pomodoro") setTimer(workDuration * 60);
       else if (mode === "short_break") setTimer(shortBreak * 60);
       else setTimer(longBreak * 60);
     }
-  }, [mode, workDuration, shortBreak, longBreak, isRunning]);
+    // If paused, do NOT reset timer
+  }, [mode, workDuration, shortBreak, longBreak, isRunning, isPaused]);
 
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => { 
+    fetchStats(); 
+    fetchWeekStats();
+    fetchMonthStats();
+  }, []);
 
   // Save durations to localStorage when changed
   useEffect(() => {
@@ -52,6 +60,18 @@ const PomodoroPage = () => {
       setStats(data);
     } catch (e) { setStats(null); }
   };
+  const fetchWeekStats = async () => {
+    try {
+      const data = await api.getPomodoroStats("week");
+      setWeekStats(data);
+    } catch (e) { setWeekStats(null); }
+  };
+  const fetchMonthStats = async () => {
+    try {
+      const data = await api.getPomodoroStats("month");
+      setMonthStats(data);
+    } catch (e) { setMonthStats(null); }
+  };
 
   const startSession = async () => {
     if (mode === "pomodoro") {
@@ -59,6 +79,21 @@ const PomodoroPage = () => {
       setSessionId(res.session_id);
     }
     setIsRunning(true);
+    setIsPaused(false);
+    intervalRef.current = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+  };
+
+  const pauseSession = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setIsRunning(false);
+    setIsPaused(true);
+  };
+
+  const resumeSession = () => {
+    setIsRunning(true);
+    setIsPaused(false);
     intervalRef.current = setInterval(() => {
       setTimer((prev) => prev - 1);
     }, 1000);
@@ -67,10 +102,15 @@ const PomodoroPage = () => {
   const finishSession = async (completed = true) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setIsRunning(false);
+    setIsPaused(false);
     if (sessionId && mode === "pomodoro") {
-      await api.finishPomodoroSession(sessionId, completed);
+      // Calculate actual time completed in minutes
+      const timeCompleted = (workDuration * 60 - timer) / 60;
+      await api.finishPomodoroSession(sessionId, completed, timeCompleted);
       setSessionId(null);
       fetchStats();
+      fetchWeekStats();
+      fetchMonthStats();
     }
   };
 
@@ -105,28 +145,68 @@ const PomodoroPage = () => {
       <div className="pomo-timer-section">
         <div className="pomo-timer-string">{formatTime(timer)}</div>
         <div className="pomo-controls">
-          {!isRunning ? (
+          {!isRunning && !isPaused ? (
             <button className="pomo-main-btn" style={{ background: MODES.find(m => m.key === mode).color }} onClick={startSession}>START</button>
-          ) : (
-            <button className="pomo-main-btn danger" onClick={handleStop}>STOP</button>
-          )}
+          ) : null}
+          {isRunning ? (
+            <button className="pomo-main-btn danger" onClick={pauseSession}>PAUSE</button>
+          ) : null}
+          {isPaused ? (
+            <>
+              <button className="pomo-main-btn" style={{ background: MODES.find(m => m.key === mode).color }} onClick={resumeSession}>RESUME</button>
+              <button className="pomo-main-btn danger" onClick={() => finishSession(false)}>END</button>
+            </>
+          ) : null}
         </div>
         <div className="pomo-customize">
-          <label>Work: <input type="number" min={5} max={120} value={workDuration} disabled={isRunning} onChange={e => setWorkDuration(Number(e.target.value))} /> min</label>
-          <label>Short Break: <input type="number" min={1} max={30} value={shortBreak} disabled={isRunning} onChange={e => setShortBreak(Number(e.target.value))} /> min</label>
-          <label>Long Break: <input type="number" min={5} max={60} value={longBreak} disabled={isRunning} onChange={e => setLongBreak(Number(e.target.value))} /> min</label>
+          <label>Work: <input type="number" min={5} max={120} value={workDuration} disabled={isRunning || isPaused} onChange={e => setWorkDuration(Number(e.target.value))} /> min</label>
+          <label>Short Break: <input type="number" min={1} max={30} value={shortBreak} disabled={isRunning || isPaused} onChange={e => setShortBreak(Number(e.target.value))} /> min</label>
+          <label>Long Break: <input type="number" min={5} max={60} value={longBreak} disabled={isRunning || isPaused} onChange={e => setLongBreak(Number(e.target.value))} /> min</label>
         </div>
       </div>
-      <div className="pomo-stats">
-        <h2>Today's Stats</h2>
-        {stats ? (
-          <>
-            <div>Sessions completed: {stats.filter(s => s.completed).length}</div>
-            <div>Total focus time: {stats.filter(s => s.completed).reduce((acc, s) => acc + s.duration_minutes, 0)} min</div>
-          </>
-        ) : (
-          <div>Loading stats...</div>
-        )}
+      <div className="pomo-stats-multi">
+        {/* This Week's Stats */}
+        <div className="pomo-stats">
+          <h2>This Week's Stats</h2>
+          {weekStats ? (
+            <>
+              <div>Sessions completed: {weekStats.filter(s => s.completed).length}</div>
+              <div>Total focus time: {
+                Number(weekStats.reduce((acc, s) => acc + (parseFloat(s.time_completed) || 0), 0).toFixed(1))
+              } min</div>
+            </>
+          ) : (
+            <div>Loading stats...</div>
+          )}
+        </div>
+        {/* Today's Stats */}
+        <div className="pomo-stats" id="pomo-today">
+          <h2>Today's Stats</h2>
+          {stats ? (
+            <>
+              <div>Sessions completed: {stats.filter(s => s.completed).length}</div>
+              <div>Total focus time: {
+                Number(stats.reduce((acc, s) => acc + (parseFloat(s.time_completed) || 0), 0).toFixed(1))
+              } min</div>
+            </>
+          ) : (
+            <div>Loading stats...</div>
+          )}
+        </div>
+        {/* This Month's Stats */}
+        <div className="pomo-stats">
+          <h2>This Month's Stats</h2>
+          {monthStats ? (
+            <>
+              <div>Sessions completed: {monthStats.filter(s => s.completed).length}</div>
+              <div>Total focus time: {
+                Number(monthStats.reduce((acc, s) => acc + (parseFloat(s.time_completed) || 0), 0).toFixed(1))
+              } min</div>
+            </>
+          ) : (
+            <div>Loading stats...</div>
+          )}
+        </div>
       </div>
     </div>
   );

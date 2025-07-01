@@ -98,7 +98,7 @@
 }
 
 .pomo-timer-string {
-  font-size: 5.5rem;
+  font-size: 12rem;
   font-weight: 800;
   color: var(--accent);
   letter-spacing: 0.05em;
@@ -180,4 +180,64 @@
   margin-bottom: 1.2rem;
   font-size: 1.3rem;
   letter-spacing: 0.01em;
+}
+
+/* Custom style for the main Today's Stats card */
+#pomo-today {
+  background: linear-gradient(135deg, #1e1e1e 80%, #00bcd4 100%);
+  border: 3px solid #4caf50;
+  color: #fff;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 24px 0 rgba(0,188,212,0.18), 0 2px 8px 0 rgba(0,0,0,0.12);
+  transform: scale(1.12);
+  z-index: 1;
+  min-width: 420px;
+  max-width: 520px;
+  padding: 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  height: auto;
+}
+
+#pomo-today h2 {
+  color: #4caf50;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  margin-bottom: 1.5rem;
+}
+
+#pomo-today div {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+}
+
+.pomo-stats-multi {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  gap: 2rem;
+  margin-top: 2.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.pomo-stats {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 350px;
+  box-sizing: border-box;
+  min-height: 0;
+  height: auto;
+  align-self: center;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
 }
