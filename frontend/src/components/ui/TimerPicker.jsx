@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * TimerPicker - A component for selecting hours, minutes, and seconds
+ * For selecting hours, minutes, and seconds
  * Used in habit forms for timer-based habits
  */
 const TimerPicker = ({ hours, minutes, seconds, setHours, setMinutes, setSeconds }) => (

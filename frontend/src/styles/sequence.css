@@ -27,7 +27,7 @@
     margin: 1rem 0 0 2.5rem;
 }
 
-/* Sequence form styling */
+/* Sequence form */
 .sequence-count-row {
     display: flex;
     align-items: center;
@@ -107,6 +107,7 @@
   box-shadow: 0 2px 12px rgba(0,0,0,0.10);
   position: relative;
 }
+
 .sequence-label {
   font-size: 2.1rem;
   font-weight: 700;
@@ -148,6 +149,7 @@
   box-shadow: 0 1px 4px rgba(229,57,53,0.08);
   transition: background 0.18s, color 0.18s;
 }
+
 .delete-sequence-btn:hover {
   background: #b71c1c;
 }

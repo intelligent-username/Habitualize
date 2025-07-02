@@ -23,7 +23,7 @@ const SequenceGroup = ({
     );
   }
 
-  // Multi-step sequence rendering
+  // Else use REAL sequence rendering
   return (
     <div className="sequence-group">
       <div className="sequence-label">{sequence.name}</div>

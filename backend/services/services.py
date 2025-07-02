@@ -2,11 +2,19 @@
 SPECIFIC Utilities for the different routes
 This file requires refactoring also (later)
 """
+
+# Might have to refactor this file, getting too long
+
 import os, sys
 from flask import current_app
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from datetime import datetime, timedelta
 
 from imports import * 
+from database.connection import run_query
+from datetime import datetime
+import random
+
 
 def get_cumulative_progress_details(habit_id):
     """
@@ -187,7 +195,7 @@ def update_sequence_details(sequence_id, payload):
     """Orchestrates updating a sequence's details."""
     current_app.logger.info(f"[Service] Starting update for sequence {sequence_id} with payload: {payload}")
 
-    # Here, you can add more complex logic, like reading current data, merging, etc.
+    # Room for more complex logic later, like reading current data, merging, etc.
     # For now, we'll directly call the simpler update function.
     
     # Basic validation
@@ -274,7 +282,6 @@ def _hydrate_sequence_with_progress(sequence_dict, date):
 
     hydrated_steps = []
     if habits_for_sequence:
-        # Use a list comprehension for a more concise way to build the steps list
         hydrated_steps = [
             serialize_hydrated_habit_step(habit_row, _get_habit_progress_for_date(habit_row, date))
             for habit_row in habits_for_sequence
@@ -292,7 +299,6 @@ def get_hydrated_sequences_for_date(date):
     if not sequences_from_db:
         return []
 
-    # Serialize all sequences first, then hydrate them using the helper in a list comprehension.
     serialized_sequences = [serialize_sequence(row) for row in sequences_from_db]
     return [_hydrate_sequence_with_progress(seq, date) for seq in serialized_sequences]
 
@@ -308,40 +314,123 @@ def get_hydrated_sequence(sequence_id, date):
 
     hydrated_sequence = serialize_sequence(sequence_row)
 
-    # Use the helper to do the heavy lifting
     hydrated_sequence_with_steps = _hydrate_sequence_with_progress(hydrated_sequence, date)
     
     return hydrated_sequence_with_steps, None, None # No error, status code
 
 
-# Pomodoro session DB logic
-
+# POMODORO LOGIC
 def insert_pomodoro_session(goal_duration_minutes, time_started):
-    from database.connection import get_db
-    from database.queries import MAKE_POMODORO_SESSION
-    db = get_db()
-    cur = db.cursor()
-    cur.execute(MAKE_POMODORO_SESSION, (goal_duration_minutes, time_started, False))
-    db.commit()
-    return cur.lastrowid
+    return run_query(MAKE_POMODORO_SESSION, (goal_duration_minutes, time_started, False))
+
 
 def finish_pomodoro_session(session_id, time_finished, completed, time_completed=None):
-    from database.connection import get_db
-    from database.queries import FINISH_POMODORO_SESSION
-    db = get_db()
-    db.execute(FINISH_POMODORO_SESSION, (time_finished, completed, time_completed, session_id))
-    db.commit()
+    # Fetch the start time from the database
+    session_data = run_query("SELECT time_started, goal_duration_minutes FROM pomodoro_sessions WHERE id = ?", (session_id,), fetch='one')
+    if not session_data:
+        current_app.logger.error(f"Could not find pomodoro session with id {session_id} to finish.")
+        return
 
-def get_pomodoro_stats(range_type):
-    from database.connection import get_db
-    from database.queries import FETCH_POMODORO_STATS
-    db = get_db()
-    if range_type == 'today':
-        cur = db.execute(FETCH_POMODORO_STATS, ('localtime',))
+    # Calculate the duration on the backend to ensure accuracy
+    time_started_str = session_data['time_started']
+    
+    # The frontend sends ISO 8601 format with 'Z' (UTC), which Python's fromisoformat can parse
+    # if it ends with +00:00. We'll handle both 'Z' and timezone-aware strings.
+    try:
+        time_started = datetime.fromisoformat(time_started_str.replace('Z', '+00:00'))
+        time_finished_obj = datetime.fromisoformat(time_finished.replace('Z', '+00:00'))
+        
+        duration_seconds = (time_finished_obj - time_started).total_seconds()
+        duration_minutes = duration_seconds / 60.0
+    except ValueError as e:
+        current_app.logger.error(f"Error parsing date strings for session {session_id}: {e}")
+        # As a fallback, use the client-sent time if parsing fails, though this is not ideal.
+        duration_minutes = time_completed if time_completed is not None else 0
+
+    # If the session was not marked as 'completed' via the timer finishing,
+    # we still record the actual time spent. The 'completed' flag now strictly
+    # means "Did the timer finish naturally?".
+    # We also check if the time worked is a significant portion of the goal, e.g., 95%
+    # This handles cases where the timer is a few seconds off due to browser throttling.
+    goal_minutes = session_data['goal_duration_minutes']
+    if not completed and (duration_minutes >= goal_minutes * 0.95):
+        completed = True
+        
+    run_query(FINISH_POMODORO_SESSION, (time_finished, completed, duration_minutes, session_id))
+
+
+def get_pomodoro_stats(range_type, start=None):
+    """
+    Returns pomodoro stats for a given range_type and start date.
+    range_type: 'day', 'week', 'month', or 'all'
+    start: ISO date string (YYYY-MM-DD) for 'day' and 'week', or 'YYYY-MM' for 'month'.
+    """
+    if range_type == 'day':
+        date_str = start or datetime.now().strftime('%Y-%m-%d')
+        x = run_query(FETCH_POMODORO_DAY, (date_str,))
     elif range_type == 'week':
-        cur = db.execute("SELECT * FROM pomodoro_sessions WHERE date(time_started) >= date('now', 'localtime', '-6 days')")
+        # `start` should be the first day of the week (YYYY-MM-DD), Sunday by default
+        if start:
+            start_date = datetime.strptime(start, '%Y-%m-%d')
+        else:
+            today = datetime.now()
+            start_date = today - timedelta(days=today.weekday())  # Monday as start of week
+        end_date = start_date + timedelta(days=6)
+        x = run_query(FETCH_POMODORO_WEEK, (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
     elif range_type == 'month':
-        cur = db.execute("SELECT * FROM pomodoro_sessions WHERE strftime('%Y-%m', time_started) = strftime('%Y-%m', 'now', 'localtime')")
+        month_str = start or datetime.now().strftime('%Y-%m')
+        x = run_query(FETCH_POMODORO_MON, (month_str,))
     else:
-        cur = db.execute("SELECT * FROM pomodoro_sessions")
-    return [dict(row) for row in cur.fetchall()]
+        x = run_query(FETCH_POMODORO_ALL)
+    return [dict(row) for row in x]
+
+
+def earliest_pom():
+    return run_query(FIND_FIRST_POM, fetch="one")
+
+
+def get_pom_day_streak():
+    rows = run_query(FETCH_DAY_STREAK, fetch="all")
+    days = set(row['d'] for row in rows)
+    today = datetime.now().date()
+    streak = 0
+    current = today
+    while current.strftime('%Y-%m-%d') in days:
+        streak += 1
+        current -= timedelta(days=1)
+    return streak
+
+
+def get_pom_week_streak():
+    rows = run_query(FETCH_WEEK_STREAK, fetch="all")
+    weeks = set(row['w'] for row in rows)
+    now = datetime.now()
+    current = now
+    streak = 0
+    while True:
+        # Use strftime for consistency with the database query
+        week_str = current.strftime('%Y-%W')
+        if week_str in weeks:
+            streak += 1
+            # Move to a day in the previous week to avoid ambiguity
+            current = current - timedelta(days=7)
+        else:
+            break
+    return streak
+
+
+# QotD
+def get_quote_of_the_day():
+    today = datetime.now().strftime('%Y-%m-%d')
+    row = run_query(FETCH_QOTD, (today,), fetch='one')
+    if row:
+        return dict(row)
+    unused = run_query(CHOOSE_QOTD)
+    if not unused:
+        run_query(MARK_QUOTES)
+        unused = run_query(CHOOSE_QOTD)
+    if not unused:
+        return {"quote": "No quotes available.", "source": "System"}
+    chosen = random.choice(unused)
+    run_query(USE_QUOTE, (today, chosen['id']))
+    return dict(chosen)

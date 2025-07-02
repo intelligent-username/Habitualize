@@ -29,3 +29,4 @@ dist-ssr
 *.sw?
 
 migrations.py
+raw_quotes.txt

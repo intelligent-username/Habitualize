@@ -16,10 +16,3 @@ const CategoryBar = ({ categories, selectedCategoryId, onSelect }) => (
 );
 
 export default CategoryBar;
-
-// Usage example:
-//     <CategoryBar
-//       categories={/* array of categories */}
-//       selectedCategoryId={/* currently selected category ID */}
-//       onSelect={(categoryId) => selectCategory(categoryId)} // Correctly wired onSelect prop
-//     />

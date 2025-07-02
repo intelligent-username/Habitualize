@@ -13,8 +13,8 @@ from database.init_db import init_db
 from routes.categories import categories_bp
 from routes.sequences import sequences_bp
 from routes.habits import habits_bp
-from routes.placeholders import settings_bp, quote_bp, analytics_bp
 from routes.pomodoro import pomodoro_bp
+from routes.quotes import quotes_bp
 
 app = Flask(__name__)
 app.config['DATABASE'] = 'data.db'
@@ -36,22 +36,27 @@ CORS(app)
 app.register_blueprint(categories_bp)
 app.register_blueprint(sequences_bp)
 app.register_blueprint(habits_bp)
-app.register_blueprint(settings_bp)
 app.register_blueprint(pomodoro_bp)
-app.register_blueprint(quote_bp)
-app.register_blueprint(analytics_bp)
+app.register_blueprint(quotes_bp)
+# # TODO: Finish the "Analytics" and "Settings" blueprints (and the pages, for that matter)
+# app.register_blueprint(analytics_bp)
+# app.register_blueprint(settings_bp)
+
 
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Not Found", "message": "The requested URL was not found on the server."}), 404
 
+
 @app.errorhandler(405)
 def method_not_allowed(error):
     return jsonify({"error": "Method Not Allowed", "message": "The method is not allowed for the requested URL."}), 405
 
+
 @app.errorhandler(Exception)
 def handle_global_exception(e):
     return jsonify({"error": str(e)}), 500
+
 
 @app.route('/')
 def index():
@@ -60,6 +65,7 @@ def index():
 @app.route('/health')
 def health():
     return jsonify({"status": "ok"})
+
 
 if __name__ == '__main__':
     with app.app_context():

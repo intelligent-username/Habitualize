@@ -15,16 +15,17 @@ def extract_data(data, required_fields, defaults=None):
     Returns values in the same order as required_fields for direct unpacking.
     """
     # If no custom defaults are provided, use a set of standard application-wide defaults.
-    # A provided 'defaults' dictionary will override these, not merge with them.
+    # If provided, 'defaults' dictionary will override these, not merge with them.
     if defaults is None:
         defaults = {'name': 'Unnamed Sequence', 'color': 'gray', 'category_id': 1, 'cumulative': 0, 'type': 'binary', 'step_order': 0}
     
-    # Use a generator expression for a more concise and Pythonic approach.
     return tuple(data.get(field, defaults.get(field)) for field in required_fields)
+
 
 def get_today():
     """Returns the current date in ISO format"""
     return datetime.date.today().isoformat()
+
 
 def calculate_start_date(period, start_day_str='sunday'):
     """
@@ -51,15 +52,12 @@ def calculate_start_date(period, start_day_str='sunday'):
         days_to_subtract = (today.weekday() - start_day_weekday + 7) % 7
         return today - datetime.timedelta(days=days_to_subtract)
 
-    # A dispatch table is a clean, scalable way to handle different period logic.
     period_actions = {
         'monthly': lambda: today.replace(day=1),
         'yearly': lambda: today.replace(month=1, day=1),
         'weekly': get_weekly_start
     }
 
-    # Get the appropriate function from the dispatch table and execute it.
     action = period_actions.get(period)
     
-    # Return the result of the function call, or None if the period was invalid.
     return action() if action else None

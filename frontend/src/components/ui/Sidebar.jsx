@@ -1,3 +1,6 @@
+// SIDE BAR
+// Very, very useful but don't waste too much time implementing too many features (go work on other projects atp)
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -92,7 +95,7 @@ const Sidebar = () => {
       icon: '🍅',
       text: 'Pomodoro',
       path: '/pomodoro',
-      badge: 'New'
+      badge: ':)'
     },
     {
       icon: '💭',

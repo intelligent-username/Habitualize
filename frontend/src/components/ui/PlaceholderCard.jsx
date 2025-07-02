@@ -1,4 +1,4 @@
-// PlaceholderCard.jsx
+// For pages (either from sidebar or wherever) that haven't been implemented yet.
 import React from 'react';
 import './PlaceholderCard.css';
 

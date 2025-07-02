@@ -1,3 +1,5 @@
+/* Habit styles (probably too many) */
+
 .habit {
     display: flex;
     align-items: center;
@@ -349,6 +351,7 @@
   padding: 0.4rem 0.7rem;
   box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
+
 .entry-input {
   width: 60px;
   padding: 0.3rem 0.5rem;
@@ -359,11 +362,13 @@
   color: var(--text-primary);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
+
 .entry-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(0,188,212,0.15);
   outline: none;
 }
+
 .entry-submit-btn {
   background: var(--accent);
   color: #fff;
@@ -375,6 +380,7 @@
   cursor: pointer;
   transition: background 0.18s, color 0.18s;
 }
+
 .entry-submit-btn:hover {
   background: #0097a7;
 }
@@ -431,3 +437,11 @@
   transform: translate(-50%, -50%) scale(1) rotate(-45deg);
 }
 
+.habit-form-label {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.3rem;
+    text-align: left;
+    display: block;
+}

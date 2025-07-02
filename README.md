@@ -1,5 +1,9 @@
 # Habitualize
 
+## “You are what you repeatedly do. Excellence, then, is not an act, but a habit."
+
+– Aristotle
+
 ## In Progress 🚧
 
 ### Habitualize is a habit tracker app 🤯

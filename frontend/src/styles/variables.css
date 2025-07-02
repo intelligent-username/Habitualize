@@ -1,4 +1,5 @@
-/* --- COLOR VARIABLES --- */
+/* --- COLOR VARIABLES (and other potetial constants later) --- Redundant with constants.js but easier to use this way*/
+
 :root {
     --bg-primary: #121212;
     --bg-secondary: #1e1e1e;

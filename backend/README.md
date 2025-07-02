@@ -87,6 +87,17 @@ The application uses SQLite with the following table structure:
                           │ completed        │
                           │ value            │
                           └──────────────────┘
+
+    ┌──────────────────────┐      ┌───────────┐
+    │  pomodoro_sessions   │      │  quotes   │
+    ├──────────────────────┤      ├───────────┤
+    │ id                   │      │ id        │
+    │ goal_duration        │      │ quote     │
+    │ time_started         │      │ source    │
+    │ time_finished        │      │ used      │
+    | completed            │      | date_used |
+    | time_completed       |      └───────────┘
+    └──────────────────────┘
 ```
 
 ### Table Relationships

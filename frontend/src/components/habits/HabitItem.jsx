@@ -11,14 +11,12 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
     const colorHex = COLOR_OPTIONS.find(opt => opt.value === habit.color)?.hex || "#b0b0b0";
     const textColor = "#fff";
 
-    // Use custom hooks for state management
     const { timer, timerRunning, setTimerRunning, setTimer } = useHabitTimer(habit, toggleCompletion);
     const { entryValue, setEntryValue } = useHabitCounters(habit);
 
     let habitControls = null;
     const isSpecial = habit.type === "counter" || habit.type === "entry" || habit.type === "timer";
 
-    // --- Define controls based on habit type ---
     if (habit.type === "counter") {
         const displayValue = `${habit.value || 0}/${habit.target_value || "?"}`;
         habitControls = (
@@ -87,7 +85,7 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
         );
     }
 
-    // --- Universal checkbox handler ---
+    // --- Checkboxes ---
     const handleCheckboxChange = (e) => {
         const isChecked = e.target.checked;
         let valueToLog = isChecked ? 1 : 0; // Default for binary

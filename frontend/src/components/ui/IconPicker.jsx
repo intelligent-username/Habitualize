@@ -11,9 +11,7 @@ const IconPicker = ({ onSelect, selectedIcon }) => {
   useEffect(() => {
     // The keys of iconModules are the paths to the icons
     // e.g., '/public/icons/activity.svg'
-    // We just need the filename, so we'll extract it.
     const iconNames = Object.keys(iconModules).map(path => path.split('/').pop());
-    // console.log('IconPicker: Dynamically loaded icons:', iconNames);
     setIcons(iconNames);
   }, []);
 

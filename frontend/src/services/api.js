@@ -32,7 +32,9 @@ class ApiService {
             console.error(`API Error (${endpoint}):`, error);
             throw error;
         }
-    }    // Category operations
+    }
+    
+    // Category Operations Section
     async getCategories() {
         console.log('[API] getCategories called, making request to /categories');
         try {
@@ -65,7 +67,7 @@ class ApiService {
         });
     }
 
-    // Sequence operations
+    // Sequence Operations Section
     async getSequencesByDate(date) {
         return this.request(`/sequences/by-date/${date}`);
     }
@@ -94,7 +96,7 @@ class ApiService {
         });
     }
 
-    // Habit operations
+    // Habit Operations Section
     async createHabit(habitData) {
         return this.request('/habits', {
             method: 'POST',
@@ -130,7 +132,7 @@ class ApiService {
         return this.request(`/habits/${id}/history`);
     }
 
-    // Pomodoro operations
+    // Pomodoro Section
     async startPomodoroSession(goal_duration_minutes) {
         return this.request('/api/pomodoro/start', {
             method: 'POST',
@@ -143,8 +145,23 @@ class ApiService {
             body: JSON.stringify({ session_id, time_finished: new Date().toISOString(), completed, time_completed })
         });
     }
-    async getPomodoroStats(range = 'today') {
-        return this.request(`/api/pomodoro/stats?range=${range}`);
+    async getPomodoroStats(range = 'day', start = null) {
+        let url = `/api/pomodoro/stats?range=${range}`;
+        if (start) url += `&start=${start}`;
+        return this.request(url);
+    }
+
+    async getEarliestPomodoroDate() {
+        return this.request('/api/pomodoro/earliest');
+    }
+
+    async getPomodoroStreaks() {
+        return this.request('/api/pomodoro/streaks');
+    }
+
+    // QotD
+    async getQuoteOfTheDay() {
+        return this.request('/api/quote-of-the-day');
     }
 }
 

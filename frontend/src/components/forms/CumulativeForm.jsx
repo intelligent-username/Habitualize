@@ -3,7 +3,9 @@ import React from "react";
 /**
  * CumulativeForm - Component for configuring cumulative habits
  * Handles weekly/monthly/yearly goal settings
+ * CURRENTLY INCOMPLETE!! Overhaul cumulative habits LATER
  */
+
 const CumulativeForm = ({
     cumulativePeriod,
     setCumulativePeriod,

@@ -1,4 +1,4 @@
-/* --- CATEGORY BAR --- */
+/* --- CATEGORY _BAR_ --- */
 
 .category-bar {
   display: flex;
@@ -19,6 +19,7 @@
   transition: background 0.2s, color 0.2s;
   user-select: none;
 
+
 }
 .category-segment.selected {
   background: var(--accent);
@@ -30,73 +31,7 @@
 
 /* -------------------------------------------- */
 
-/* --- CATEGORY MODAL --- */
-.habit-form-label {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 0.3rem;
-    text-align: left;
-    display: block;
-}
-
-.color-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 36px);
-    grid-template-rows: repeat(4, 36px);
-    gap: 0.7rem;
-    justify-content: start;
-}
-
-.color-square {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 2px solid transparent;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border 0.2s;
-    position: relative;
-    outline: none;
-}
-
-.color-square.selected {
-    border: 2.5px solid var(--accent);
-    box-shadow: 0 0 0 2px var(--accent);
-}
-
-.color-check {
-    color: #fff;
-    font-size: 1.3rem;
-    font-weight: bold;
-    text-shadow: 0 0 3px #000, 0 0 2px #000;
-    pointer-events: none;
-}
-
-.color-preview-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    cursor: pointer;
-    display: inline-block;
-    outline: none;
-    transition: border 0.2s;
-    margin-bottom: 0;
-    position: relative;
-}
-
-.color-grid-popup {
-    position: absolute;
-    top: 40px;
-    left: 0;
-    z-index: 10;
-    background: var(--bg-secondary);
-    border-radius: 10px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-    padding: 1rem;
-}
+/* --- CATEGORY MODAL & Buttons --- */
 
 .add-category-btn {
     background: var(--bg-secondary);
@@ -113,6 +48,7 @@
     margin-top: 0.5rem;
     box-shadow: 0 2px 8px rgba(0,188,212,0.08);
 }
+
 .add-category-btn:hover {
     background: var(--accent);
     color: var(--bg-primary);
@@ -193,6 +129,7 @@
   outline: none;
   transition: border 0.2s, box-shadow 0.2s;
 }
+
 .category-list-item input[type="text"]:focus {
   border-color: var(--accent, #00bcd4);
   box-shadow: 0 0 0 2px rgba(0,188,212,0.15);
@@ -226,6 +163,7 @@
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
 }
+
 .category-list-actions button:hover {
   filter: brightness(0.95);
 }
@@ -241,6 +179,7 @@
   margin-right: 0.5em;
   transition: background 0.15s;
 }
+
 .category-save-btn:hover, .category-save-btn:focus {
   background: #1bbf5c;
 }
@@ -255,6 +194,7 @@
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
+
 .category-cancel-btn:hover, .category-cancel-btn:focus {
   background: #eee;
   color: var(--danger);

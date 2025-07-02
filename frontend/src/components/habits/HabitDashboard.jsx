@@ -67,7 +67,7 @@ const HabitDashboard = ({ selectedDate, selectedCategoryId }) => {
         try {
             await toggleCompletion(id, completed, value, selectedDate);
         } catch (error) {
-            console.error("Failed to toggle completion:", error);
+            console.error("Could not toggle completion:", error);
         }
     };
 

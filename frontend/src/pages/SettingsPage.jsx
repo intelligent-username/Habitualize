@@ -1,6 +1,9 @@
 import React from 'react';
 import '../styles/settings.css';
 
+// THIS IS A COMPLETE DUMMY PAGE FOR NOW.
+// NO API calls whatsoever
+
 const SettingsPage = () => (
   <div className="page-container">
     <h1 className="page-title">Settings</h1>

@@ -8,7 +8,6 @@ import sqlite3
 from flask import current_app
 
 
-
 def init_db():
     path = current_app.config['DATABASE']
     conn = sqlite3.connect(path)
@@ -61,15 +60,27 @@ def init_db():
         )
     ''')
 
-    # Pomodoro tracking table
+    # Pomodoro  table
     c.execute('''
             CREATE TABLE IF NOT EXISTS pomodoro_sessions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 goal_duration_minutes INTEGER NOT NULL,
                 time_started TEXT NOT NULL,
                 time_finished TEXT,
-                completed BOOLEAN NOT NULL,
+                completed BOOLEAN NOT NULL DEFAULT 0,
                 time_completed REAL
             );
             ''')
+    
+    # Quotes table
+    c.execute('''
+              CREATE TABLE IF NOT EXISTS quotes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            quote TEXT NOT NULL,
+            source TEXT NOT NULL,
+            used BOOLEAN NOT NULL DEFAULT 0,
+            date_used TEXT DEFAULT NULL
+        );
+    ''')
+
     conn.commit()

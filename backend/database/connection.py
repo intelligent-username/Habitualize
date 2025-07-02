@@ -1,31 +1,9 @@
-"""DB connection context manager"""
+"""DB connection context manager. Really only run_query will be used from this file"""
 
 import sqlite3
 from flask import current_app, g
-# from contextlib import contextmanager
 
 DB_PATH = 'data.db'
-
-# Open a single persistent connection for the lifetime of the Flask app, not needed anymore but keep for reference (delete later)
-# New calls will connect to a cursor from this one
-# persistent_conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-
-# @contextmanager
-# def get_db_connection():
-#     """
-#     Context manager for database connections.
-#     Automatically handles connection opening/closing and commit/rollback.
-    
-#     Example:
-#         with get_db_connection() as conn:
-#             cursor = conn.cursor()
-#             cursor.execute("SELECT * FROM categories")
-#     """
-#     conn = sqlite3.connect(DB_PATH)
-#     try:
-#         yield conn
-#     finally:
-#         conn.close()
 
 def get_db():
     """
@@ -41,6 +19,7 @@ def get_db():
 
     return g.db
 
+
 def close_db(e=None):
     """
     If this request connected to the database, close the connection.
@@ -49,6 +28,7 @@ def close_db(e=None):
 
     if db is not None:
         db.close()
+
 
 def run_query(sql, params=None, fetch='all'):
     """
@@ -82,4 +62,3 @@ def run_query(sql, params=None, fetch='all'):
         db.rollback()
 
         raise
-
