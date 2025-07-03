@@ -1,5 +1,5 @@
 import React from "react";
-import { getDaysInMonth } from "../../utils/dateHelpers";
+import { getDaysInMonth } from "../../utils/timeHelpers";
 
 const MonthView = ({ selectedDate, onSelectDate, onClose }) => {
     const date = new Date(selectedDate);

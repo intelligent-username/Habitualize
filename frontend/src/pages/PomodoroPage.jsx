@@ -3,6 +3,7 @@ import api from "../services/api";
 import "../App.css";
 import "../styles/pomodoro.css";
 import { addDays, subDays, format, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths, getWeek, getWeekYear, isThisYear, isToday, isThisWeek, isThisMonth, differenceInDays } from "date-fns";
+import { getPomodoroRemainingTime } from "../utils/timeHelpers";
 
 const MODES = [
   { key: "pomodoro", label: "Work Session", color: "#ba4949", default: 25 },
@@ -19,13 +20,27 @@ function saveDurations(work, short, long) {
   localStorage.setItem("pomodoro_durations", JSON.stringify({ work, short, long }));
 }
 
+// Session persistence functions
+function saveSessionState(sessionData) {
+  localStorage.setItem("pomodoro_session", JSON.stringify(sessionData));
+}
+
+function getSessionState() {
+  const saved = localStorage.getItem("pomodoro_session");
+  return saved ? JSON.parse(saved) : null;
+}
+
+function clearSessionState() {
+  localStorage.removeItem("pomodoro_session");
+}
+
 const PomodoroPage = () => {
   const saved = getSavedDurations();
   const [mode, setMode] = useState(MODES[0].key);
   const [workDuration, setWorkDuration] = useState(saved.work);
   const [shortBreak, setShortBreak] = useState(saved.short);
   const [longBreak, setLongBreak] = useState(saved.long);
-  const [timer, setTimer] = useState(saved.work * 60);
+  const [timer, setTimer] = useState(null); // Start as null, set after restoration
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [sessionId, setSessionId] = useState(null);
@@ -45,6 +60,101 @@ const PomodoroPage = () => {
   const timerSectionRef = useRef(null);
   const [timerDimensions, setTimerDimensions] = useState({ width: 0, height: 0 });
   const audioRef = useRef(null);
+
+  // Session restoration on component mount
+  useEffect(() => {
+    const restoreSession = async () => {
+      const savedSession = getSessionState();
+      if (!savedSession) {
+        // No session, set timer to default for current mode
+        if (mode === "pomodoro") setTimer(workDuration * 60);
+        else if (mode === "short_break") setTimer(shortBreak * 60);
+        else setTimer(longBreak * 60);
+        return;
+      }
+
+      const {
+        mode: savedMode,
+        startTime,
+        sessionId: savedSessionId,
+        pausedAt,
+        pausedDuration,
+        totalDuration,
+        workDuration: savedWorkDuration,
+        shortBreak: savedShortBreak,
+        longBreak: savedLongBreak
+      } = savedSession;
+
+      // Restore durations first
+      if (savedWorkDuration !== undefined) setWorkDuration(savedWorkDuration);
+      if (savedShortBreak !== undefined) setShortBreak(savedShortBreak);
+      if (savedLongBreak !== undefined) setLongBreak(savedLongBreak);
+      
+      // Set mode
+      setMode(savedMode);
+
+      // Calculate remaining time
+      const remainingTime = getPomodoroRemainingTime(savedSession);
+
+      if (remainingTime <= 0) {
+        // Session should have finished while user was away
+        if (savedSessionId && savedMode === "pomodoro") {
+          try {
+            // Log the completed session
+            const timeCompleted = totalDuration / 60; // Convert to minutes
+            await api.finishPomodoroSession(savedSessionId, true, timeCompleted);
+            
+            // Refresh stats after completing the session
+            fetchStats(dayDate);
+            fetchWeekStats(weekStart);
+            fetchMonthStats(monthDate);
+            fetchEarliestDate();
+            fetchStreaks();
+            
+            // Show celebration if it was a work session
+            setCelebrate(true);
+            setTimeout(() => setCelebrate(false), 2000);
+            
+            // Play sound
+            if (audioRef.current) {
+              audioRef.current.currentTime = 0;
+              audioRef.current.play();
+            }
+          } catch (error) {
+            console.error("Error finishing restored session:", error);
+          }
+        }
+        
+        // Reset to default state
+        clearSessionState();
+        setTimer(savedMode === "pomodoro" ? (savedWorkDuration || workDuration) * 60 : 
+                savedMode === "short_break" ? (savedShortBreak || shortBreak) * 60 : 
+                (savedLongBreak || longBreak) * 60);
+        setIsRunning(false);
+        setIsPaused(false);
+        setSessionId(null);
+      } else {
+        // Session is still active, restore state
+        setTimer(remainingTime);
+        setSessionId(savedSessionId);
+        
+        if (pausedAt) {
+          // Session was paused
+          setIsRunning(false);
+          setIsPaused(true);
+        } else {
+          // Session was running, resume it
+          setIsRunning(true);
+          setIsPaused(false);
+          intervalRef.current = setInterval(() => {
+            setTimer((prev) => prev - 1);
+          }, 1000);
+        }
+      }
+    };
+
+    restoreSession();
+  }, []); // Only run on mount
 
   useLayoutEffect(() => {
     const updateDimensions = () => {
@@ -73,14 +183,14 @@ const PomodoroPage = () => {
     }
   };
 
-  // Update timer when mode or durations change
+  // Update timer when mode or durations change, but only if not running/paused and timer is not null
   useEffect(() => {
+    if (timer === null) return; // Don't update until restoration is done
     if (!isRunning && !isPaused) {
       if (mode === "pomodoro") setTimer(workDuration * 60);
       else if (mode === "short_break") setTimer(shortBreak * 60);
       else setTimer(longBreak * 60);
     }
-    // If paused, DO NOT reset timer!!
   }, [mode, workDuration, shortBreak, longBreak, isRunning, isPaused]);
 
   useEffect(() => {
@@ -164,12 +274,33 @@ const PomodoroPage = () => {
   };
 
   const startSession = async () => {
+    let newSessionId = null;
+    
     if (mode === "pomodoro") {
       const res = await api.startPomodoroSession(workDuration);
-      setSessionId(res.session_id);
+      newSessionId = res.session_id;
+      setSessionId(newSessionId);
     }
+    
     setIsRunning(true);
     setIsPaused(false);
+    
+    // Save session state to localStorage
+    const sessionData = {
+      mode,
+      startTime: new Date().toISOString(),
+      sessionId: newSessionId,
+      pausedAt: null,
+      pausedDuration: 0,
+      totalDuration: mode === "pomodoro" ? workDuration * 60 : 
+                     mode === "short_break" ? shortBreak * 60 : 
+                     longBreak * 60,
+      workDuration,
+      shortBreak,
+      longBreak
+    };
+    saveSessionState(sessionData);
+    
     intervalRef.current = setInterval(() => {
       setTimer((prev) => prev - 1);
     }, 1000);
@@ -179,11 +310,41 @@ const PomodoroPage = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setIsRunning(false);
     setIsPaused(true);
+    
+    // Update session state with pause time
+    const savedSession = getSessionState();
+    if (savedSession) {
+      const updatedSession = {
+        ...savedSession,
+        pausedAt: new Date().toISOString()
+      };
+      saveSessionState(updatedSession);
+    }
   };
 
   const resumeSession = () => {
     setIsRunning(true);
     setIsPaused(false);
+    
+    // Update session state - calculate accumulated pause time
+    const savedSession = getSessionState();
+    if (savedSession && savedSession.pausedAt) {
+      const pauseStart = new Date(savedSession.pausedAt);
+      const pauseEnd = new Date();
+      const thisPauseDuration = Math.floor((pauseEnd - pauseStart) / 1000);
+      
+      const updatedSession = {
+        ...savedSession,
+        pausedAt: null,
+        pausedDuration: (savedSession.pausedDuration || 0) + thisPauseDuration
+      };
+      saveSessionState(updatedSession);
+      
+      // Recalculate timer using the helper function
+      const remainingTime = getPomodoroRemainingTime(updatedSession);
+      setTimer(Math.max(0, remainingTime));
+    }
+    
     intervalRef.current = setInterval(() => {
       setTimer((prev) => prev - 1);
     }, 1000);
@@ -193,8 +354,12 @@ const PomodoroPage = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setIsRunning(false);
     setIsPaused(false);
+    
+    // Clear session state from localStorage
+    clearSessionState();
+    
     if (sessionId && mode === "pomodoro") {
-      // Calculate ACTUAL time completed in minutes. Potential bug?
+      // Calculate ACTUAL time completed in minutes
       const timeCompleted = (workDuration * 60 - timer) / 60;
       await api.finishPomodoroSession(sessionId, completed, timeCompleted);
       setSessionId(null);
@@ -219,6 +384,21 @@ const PomodoroPage = () => {
       }
     }
   }, [timer, isRunning, mode]);
+
+  // Periodic sync with accurate time calculation (every 10 seconds)
+  useEffect(() => {
+    if (!isRunning || isPaused) return;
+
+    const syncInterval = setInterval(() => {
+      const savedSession = getSessionState();
+      if (savedSession) {
+        const accurateRemaining = getPomodoroRemainingTime(savedSession);
+        setTimer(Math.max(0, accurateRemaining));
+      }
+    }, 10000); // Sync every 10 seconds
+
+    return () => clearInterval(syncInterval);
+  }, [isRunning, isPaused]);
 
   const handleStop = () => finishSession(false);
 
@@ -327,42 +507,45 @@ const PomodoroPage = () => {
           ))}
         </div>
       </div>
-      <div className="pomo-timer-section" ref={timerSectionRef}>
-        <svg className="timer-outline-svg" viewBox={`0 0 ${timerDimensions.width} ${timerDimensions.height}`}>
-          <path
-            className="timer-progress-background"
-            d={`M 2.5,2.5 L ${timerDimensions.width - 2.5},2.5 L ${timerDimensions.width - 2.5},${timerDimensions.height - 2.5} L 2.5,${timerDimensions.height - 2.5} Z`}
-          />
-          <path
-            ref={outlineRef}
-            className="timer-progress-bar"
-            style={{ color: MODES.find((m) => m.key === mode).color }}
-            d={`M 2.5,2.5 L ${timerDimensions.width - 2.5},2.5 L ${timerDimensions.width - 2.5},${timerDimensions.height - 2.5} L 2.5,${timerDimensions.height - 2.5} Z`}
-          />
-        </svg>
-        <div style={{position: 'relative', zIndex: 2, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-          <div className="pomo-timer-string">{formatTime(timer)}</div>
-          <div className="pomo-controls">
-            {!isRunning && !isPaused ? (
-              <button className="pomo-main-btn" style={{ background: MODES.find(m => m.key === mode).color }} onClick={startSession}>START</button>
-            ) : null}
-            {isRunning ? (
-              <button className="pomo-main-btn danger" onClick={pauseSession}>PAUSE</button>
-            ) : null}
-            {isPaused ? (
-              <>
-                <button className="pomo-main-btn" style={{ background: MODES.find(m => m.key === mode).color }} onClick={resumeSession}>RESUME</button>
-                <button className="pomo-main-btn danger" onClick={() => finishSession(false)}>END</button>
-              </>
-            ) : null}
-          </div>
-          <div className="pomo-customize">
-            <label>Work: <input type="number" min={5} max={1440} step={0.01} value={workDuration} disabled={isRunning || isPaused} onChange={e => setWorkDuration(Math.min(1440, Number(e.target.value)))} /> min</label>
-            <label>Short Break: <input type="number" min={1} max={1440} step={0.01} value={shortBreak} disabled={isRunning || isPaused} onChange={e => setShortBreak(Math.min(1440, Number(e.target.value)))} /> min</label>
-            <label>Long Break: <input type="number" min={5} max={1440} step={0.01} value={longBreak} disabled={isRunning || isPaused} onChange={e => setLongBreak(Math.min(1440, Number(e.target.value)))} /> min</label>
+      {/* Only render timer section if timer is not null */}
+      {timer !== null && (
+        <div className="pomo-timer-section" ref={timerSectionRef}>
+          <svg className="timer-outline-svg" viewBox={`0 0 ${timerDimensions.width} ${timerDimensions.height}`}>
+            <path
+              className="timer-progress-background"
+              d={`M 2.5,2.5 L ${timerDimensions.width - 2.5},2.5 L ${timerDimensions.width - 2.5},${timerDimensions.height - 2.5} L 2.5,${timerDimensions.height - 2.5} Z`}
+            />
+            <path
+              ref={outlineRef}
+              className="timer-progress-bar"
+              style={{ color: MODES.find((m) => m.key === mode).color }}
+              d={`M 2.5,2.5 L ${timerDimensions.width - 2.5},2.5 L ${timerDimensions.width - 2.5},${timerDimensions.height - 2.5} L 2.5,${timerDimensions.height - 2.5} Z`}
+            />
+          </svg>
+          <div style={{position: 'relative', zIndex: 2, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+            <div className="pomo-timer-string">{formatTime(timer)}</div>
+            <div className="pomo-controls">
+              {!isRunning && !isPaused ? (
+                <button className="pomo-main-btn" style={{ background: MODES.find(m => m.key === mode).color }} onClick={startSession}>START</button>
+              ) : null}
+              {isRunning ? (
+                <button className="pomo-main-btn danger" onClick={pauseSession}>PAUSE</button>
+              ) : null}
+              {isPaused ? (
+                <>
+                  <button className="pomo-main-btn" style={{ background: MODES.find(m => m.key === mode).color }} onClick={resumeSession}>RESUME</button>
+                  <button className="pomo-main-btn danger" onClick={() => finishSession(false)}>END</button>
+                </>
+              ) : null}
+            </div>
+            <div className="pomo-customize">
+              <label>Work: <input type="number" min={5} max={1440} step={0.01} value={workDuration} disabled={isRunning || isPaused} onChange={e => setWorkDuration(Math.min(1440, Number(e.target.value)))} /> min</label>
+              <label>Short Break: <input type="number" min={1} max={1440} step={0.01} value={shortBreak} disabled={isRunning || isPaused} onChange={e => setShortBreak(Math.min(1440, Number(e.target.value)))} /> min</label>
+              <label>Long Break: <input type="number" min={5} max={1440} step={0.01} value={longBreak} disabled={isRunning || isPaused} onChange={e => setLongBreak(Math.min(1440, Number(e.target.value)))} /> min</label>
+            </div>
           </div>
         </div>
-      </div>
+      )}
       <div className="pomo-stats-multi">
         {/* Weekly Stats */}
         <div className="pomo-stats">

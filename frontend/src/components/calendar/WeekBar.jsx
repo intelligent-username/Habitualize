@@ -1,5 +1,5 @@
 import React from "react";
-import { getWeekDates, getMonthName, isSameDay, parseISODateToLocal } from "../../utils/dateHelpers";
+import { getWeekDates, getMonthName, isSameDay, parseISODateToLocal } from "../../utils/timeHelpers";
 import { startOfWeek } from "date-fns";
 
 const WeekBar = ({

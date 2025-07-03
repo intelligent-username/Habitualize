@@ -113,3 +113,44 @@ export function getNextWeek(selectedDate) {
 export function getDaysInMonth(year, month) {
     return new Date(year, month + 1, 0).getDate();
 }
+
+/**
+ * Calculate remaining time for a Pomodoro session with accurate elapsed time tracking
+ * Handles paused state and ensures accurate time calculation even after tab-out or refresh
+ * @param {Object} sessionData - Session data from localStorage
+ * @param {string} sessionData.startTime - ISO timestamp when session started
+ * @param {string|null} sessionData.pausedAt - ISO timestamp when session was paused (null if not paused)
+ * @param {number} sessionData.totalDuration - Total session duration in seconds
+ * @param {number} sessionData.pausedDuration - Total time spent paused in seconds
+ * @returns {number} - Remaining time in seconds (0 if session should be finished)
+ */
+export function getPomodoroRemainingTime(sessionData) {
+    const { startTime, pausedAt, totalDuration, pausedDuration } = sessionData;
+    
+    if (!startTime || !totalDuration) {
+        return 0;
+    }
+    
+    const now = new Date();
+    const sessionStart = new Date(startTime);
+    
+    // Calculate elapsed time
+    let elapsedTime;
+    if (pausedAt) {
+        // Session is paused - use time up to when it was paused
+        const pauseTime = new Date(pausedAt);
+        elapsedTime = Math.floor((pauseTime - sessionStart) / 1000);
+    } else {
+        // Session is running - use current time
+        elapsedTime = Math.floor((now - sessionStart) / 1000);
+    }
+    
+    // Subtract any time spent paused from elapsed time
+    const activeElapsedTime = elapsedTime - (pausedDuration || 0);
+    
+    // Calculate remaining time
+    const remainingTime = totalDuration - activeElapsedTime;
+    
+    // Return 0 if session should be finished
+    return Math.max(0, remainingTime);
+}

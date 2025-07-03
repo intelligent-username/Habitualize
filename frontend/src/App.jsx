@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import './App.css';
 import { WeekBar, MonthView } from "./components/calendar";
 import { addDays, subDays, startOfWeek, parseISO } from 'date-fns';
-import { getLocalDateString } from "./utils/dateHelpers.js";
+import { getLocalDateString } from "./utils/timeHelpers.js";
 import { CategoryManager } from "./components/categories";
 import { HabitDashboard } from "./components/habits";
 import { useCategories } from "./hooks/useCategories.js";
