@@ -1,7 +1,18 @@
+/**
+ * Constants and utility functions for Habitualize
+ * Defines color schemes, defaults, and mobile detection
+ */
+
+// Device detection
 export const isMobile = () =>
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
   );
+
+// Time formatting constants
+const SECONDS_PER_HOUR = 3600;
+const SECONDS_PER_MINUTE = 60;
+const TIME_PADDING = 2;
 
 // All 12 Color options for habits
 export const COLOR_OPTIONS = [
@@ -19,16 +30,31 @@ export const COLOR_OPTIONS = [
   { name: "Olive", value: "olive", hex: "#808000" },
 ];
 
+// Default values
 export const DEFAULT_HABIT_COLOR = "gray";
 export const DEFAULT_HABIT_TYPE = "binary";
 
-// Timer formatting utility
-// TODO: Add more formats, make this easier to use on PC
+/**
+ * Format time in seconds to HH:MM:SS or MM:SS format
+ * @param {number} seconds - Time in seconds
+ * @returns {string} Formatted time string
+ * @example formatTime(3661) // "1:01:01"
+ * @example formatTime(61) // "1:01"
+ */
 export const formatTime = (seconds) => {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0)
-    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  const h = Math.floor(seconds / SECONDS_PER_HOUR);
+  const m = Math.floor((seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
+  const s = seconds % SECONDS_PER_MINUTE;
+  
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(TIME_PADDING, "0")}:${s.toString().padStart(TIME_PADDING, "0")}`;
+  }
+  
+  return `${m}:${s.toString().padStart(TIME_PADDING, "0")}`;
 };
+
+export const MODES = [
+  { key: "pomodoro", label: "Work Session", color: "#ba4949", default: 25 },
+  { key: "short_break", label: "Short Break", color: "#1b4636", default: 5 },
+  { key: "long_break", label: "Long Break", color: "#1260cc", default: 15 },
+];

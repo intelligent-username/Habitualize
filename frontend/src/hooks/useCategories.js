@@ -7,9 +7,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiService from '../services/api';
 
+const DEFAULT_CATEGORY_ID = 1;
+
 export const useCategories = () => {
     const queryClient = useQueryClient();
-    const [selectedCategoryId, setSelectedCategoryId] = useState(1);
+    const [selectedCategoryId, setSelectedCategoryId] = useState(DEFAULT_CATEGORY_ID);
     // Category modal state
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
@@ -27,16 +29,16 @@ export const useCategories = () => {
         queryFn: () => apiService.getCategories(),
         staleTime: 1000 * 60 * 5, // 5 minutes
         retry: 2,
-        structuralSharing: true // Ensure React Query uses structural sharing to prevent unnecessary re-renders
+        structuralSharing: true
     });
 
-    // Memoize categories to prevent reference changes when data is identical
-    const stableCategories = useMemo(() => categories, [JSON.stringify(categories)]);
+    // Remove JSON.stringify from useMemo, just use categories directly
+    const stableCategories = categories;
 
     // Validate selected category still exists when categories change
     useEffect(() => {
         if (stableCategories.length > 0 && !stableCategories.find(cat => cat.id === selectedCategoryId)) {
-            setSelectedCategoryId(1);
+            setSelectedCategoryId(DEFAULT_CATEGORY_ID);
         }
     }, [stableCategories, selectedCategoryId]);
 
@@ -76,19 +78,18 @@ export const useCategories = () => {
      */
     const deleteCategoryMutation = useMutation({
         mutationFn: (id) => {
-            if (id === 1) {
+            if (id === DEFAULT_CATEGORY_ID) {
                 return Promise.reject(new Error('Cannot delete default category'));
             }
             return apiService.deleteCategory(id);
         },
         onSuccess: (data, id) => {
-            // If the deleted category was selected, reset to default
             if (selectedCategoryId === id) {
-                setSelectedCategoryId(1);
+                setSelectedCategoryId(DEFAULT_CATEGORY_ID);
             }
             queryClient.invalidateQueries({ queryKey: ['categories'] });
         }
-    });    // Wrapper functions to maintain original API
+    });    // Wrapper functions to maintain o.g. API
     const createCategory = (name) => createCategoryMutation.mutateAsync(name);
     const updateCategory = ({ id, name }) => updateCategoryMutation.mutateAsync({ id, name });
     const deleteCategory = (id) => deleteCategoryMutation.mutateAsync(id);/**
@@ -99,51 +100,67 @@ export const useCategories = () => {
         setSelectedCategoryId(categoryId);
     };
 
-    // Modal handlers
-    const handleAddCategory = async () => {
-        if (!newCategoryName.trim()) return;
-        try {
-            await createCategory(newCategoryName);
-            setNewCategoryName("");
-        } catch (error) {
-            console.error("Failed to add category:", error);
-        }
-    };
-    const handleDeleteCategory = async (id) => {
-        if (id === 1) return;
-        const confirmed = window.confirm("Are you sure you want to delete this category?");
-        if (!confirmed) return;
-        try {
-            await deleteCategory(id);
-        } catch (error) {
-            console.error("Failed to delete category:", error);
-        }
-    };
-    const handleStartRenameCategory = (id, name) => {
-        setRenameCategoryId(id);
-        setRenameCategoryName(name);
-    };
-    const handleRenameCategory = async () => {
-        if (!renameCategoryName.trim() || !renameCategoryId) return;
-        try {
-            await updateCategory({ id: renameCategoryId, name: renameCategoryName });
-            setRenameCategoryId(null);
-            setRenameCategoryName("");
-        } catch (error) {
-            console.error("Failed to rename category:", error);
-        }
-    };
-    const handleOpenCategoryModal = () => {
-        setShowCategoryModal(true);
-        setNewCategoryName("");
-        setRenameCategoryId(null);
-        setRenameCategoryName("");
-    };
-    const handleCloseCategoryModal = () => {
+    // Modal state and handlers (grouped)
+    const [lastError, setLastError] = useState(null);
+    const resetModalState = () => {
         setShowCategoryModal(false);
         setNewCategoryName("");
         setRenameCategoryId(null);
         setRenameCategoryName("");
+        setLastError(null);
+    };
+    const modal = {
+        show: showCategoryModal,
+        newCategoryName,
+        setNewCategoryName,
+        renameCategoryId,
+        renameCategoryName,
+        setRenameCategoryId,
+        setRenameCategoryName,
+        lastError,
+        open: () => {
+            resetModalState();
+            setShowCategoryModal(true);
+        },
+        close: resetModalState,
+        add: async () => {
+            setLastError(null);
+            if (!newCategoryName.trim()) return;
+            try {
+                await createCategory(newCategoryName);
+                setNewCategoryName("");
+            } catch (err) {
+                setLastError(err.message || String(err));
+            }
+        },
+        delete: async (id) => {
+            setLastError(null);
+            if (id === DEFAULT_CATEGORY_ID) return;
+            const confirmed = window.confirm("Are you sure you want to delete this category?");
+            if (!confirmed) return;
+            try {
+                await deleteCategory(id);
+            } catch (err) {
+                setLastError(err.message || String(err));
+            }
+        },
+        startRename: (id, name) => {
+            setRenameCategoryId(id);
+            setRenameCategoryName(name);
+            setLastError(null);
+        },
+        rename: async () => {
+            setLastError(null);
+            if (!renameCategoryName.trim() || !renameCategoryId) return;
+            try {
+                await updateCategory({ id: renameCategoryId, name: renameCategoryName });
+                setRenameCategoryId(null);
+                setRenameCategoryName("");
+            } catch (err) {
+                setLastError(err.message || String(err));
+            }
+        },
+        reset: resetModalState
     };
 
     return {
@@ -156,19 +173,6 @@ export const useCategories = () => {
         updateCategory,
         deleteCategory,
         selectCategory,
-        // Modal state and handlers
-        showCategoryModal,
-        newCategoryName,
-        setNewCategoryName,
-        renameCategoryId,
-        renameCategoryName,
-        setRenameCategoryId,
-        setRenameCategoryName,
-        handleAddCategory,
-        handleDeleteCategory,
-        handleStartRenameCategory,
-        handleRenameCategory,
-        handleOpenCategoryModal,
-        handleCloseCategoryModal
+        modal
     };
 };

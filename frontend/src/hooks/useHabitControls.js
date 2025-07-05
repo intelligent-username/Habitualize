@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react";
 
+const TIMER_INTERVAL_MS = 1000;
+
 /**
  * useHabitTimer - Custom hook for managing timer state in HabitItem
  * Handles timer countdown, auto-completion, and state synchronization
+ * 
+ * @param {Object} habit - The habit object containing timer configuration
+ * @param {Function} toggleCompletion - Function to mark habit as complete
+ * @returns {Object} Timer state and controls
  */
 export const useHabitTimer = (habit, toggleCompletion) => {
-    const [timer, setTimer] = useState(Number(habit.value) || 0);
+    const [timer, setTimer] = useState(() => Number(habit.value) || 0);
     const [timerRunning, setTimerRunning] = useState(false);
 
     // Reset timer when habit completion status changes
@@ -18,21 +24,25 @@ export const useHabitTimer = (habit, toggleCompletion) => {
 
     // Timer countdown logic
     useEffect(() => {
-        let interval;
-        if (timerRunning && !habit.completed && habit.type === "timer") {
-            interval = setInterval(() => {
-                setTimer(t => {
-                    const next = t + 1;
-                    if (habit.target_value && next >= habit.target_value) {
-                        console.log(`[Timer] Reached target ${habit.target_value}s! Marking habit as complete.`);
-                        setTimerRunning(false);
-                        toggleCompletion(habit.id, true, habit.target_value);
-                        return habit.target_value;
-                    }
-                    return next;
-                });
-            }, 1000);
+        if (!timerRunning || habit.completed || habit.type !== "timer") {
+            return;
         }
+
+        const interval = setInterval(() => {
+            setTimer(prevTimer => {
+                const nextTimer = prevTimer + 1;
+                
+                // Auto-complete when target is reached
+                if (habit.target_value && nextTimer >= habit.target_value) {
+                    setTimerRunning(false);
+                    toggleCompletion(habit.id, true, habit.target_value);
+                    return habit.target_value;
+                }
+                
+                return nextTimer;
+            });
+        }, TIMER_INTERVAL_MS);
+
         return () => clearInterval(interval);
     }, [timerRunning, habit.completed, habit.type, habit.target_value, habit.id, toggleCompletion]);
 

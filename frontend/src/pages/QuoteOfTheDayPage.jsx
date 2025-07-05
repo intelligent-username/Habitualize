@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import "../App.css";
 import "../styles/quoteoftheday.css";
+// Beautiful quotes I like :)
 
 const QuoteOfTheDayPage = () => {
   const [quote, setQuote] = useState(null);

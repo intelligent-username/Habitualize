@@ -1,160 +1,55 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
-import api from "../services/api";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import "../App.css";
 import "../styles/pomodoro.css";
-import { addDays, subDays, format, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths, getWeek, getWeekYear, isThisYear, isToday, isThisWeek, isThisMonth, differenceInDays } from "date-fns";
-import { getPomodoroRemainingTime } from "../utils/timeHelpers";
-
-const MODES = [
-  { key: "pomodoro", label: "Work Session", color: "#ba4949", default: 25 },
-  { key: "short_break", label: "Short Break", color: "#1b4636", default: 5 },
-  { key: "long_break", label: "Long Break", color: "#1260cc", default: 15 },
-];
-
-function getSavedDurations() {
-  const saved = localStorage.getItem("pomodoro_durations");
-  if (saved) return JSON.parse(saved);
-  return { work: 25, short: 5, long: 15 };
-}
-function saveDurations(work, short, long) {
-  localStorage.setItem("pomodoro_durations", JSON.stringify({ work, short, long }));
-}
-
-// Session persistence functions
-function saveSessionState(sessionData) {
-  localStorage.setItem("pomodoro_session", JSON.stringify(sessionData));
-}
-
-function getSessionState() {
-  const saved = localStorage.getItem("pomodoro_session");
-  return saved ? JSON.parse(saved) : null;
-}
-
-function clearSessionState() {
-  localStorage.removeItem("pomodoro_session");
-}
+import { PomodoroLineGraph } from "../components/pages";
+import { usePomodoro } from '../hooks/usePomodoro';
+import { usePomodoroData } from '../hooks/usePomodoroData';
+import { usePomodoroNavigation } from '../hooks/usePomodoroNavigation';
 
 const PomodoroPage = () => {
-  const saved = getSavedDurations();
-  const [mode, setMode] = useState(MODES[0].key);
-  const [workDuration, setWorkDuration] = useState(saved.work);
-  const [shortBreak, setShortBreak] = useState(saved.short);
-  const [longBreak, setLongBreak] = useState(saved.long);
-  const [timer, setTimer] = useState(null); // Start as null, set after restoration
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [sessionId, setSessionId] = useState(null);
-  const [stats, setStats] = useState(null);
-  const [weekStats, setWeekStats] = useState(null);
-  const [monthStats, setMonthStats] = useState(null);
   const [isCompact, setIsCompact] = useState(window.innerWidth < 700);
-  const [dayDate, setDayDate] = useState(new Date());
-  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [monthDate, setMonthDate] = useState(startOfMonth(new Date()));
-  const [earliestDate, setEarliestDate] = useState(null);
-  const [streaks, setStreaks] = useState({ current_day_streak: 0, current_week_streak: 0 });
-  const [celebrate, setCelebrate] = useState(false);
-  const intervalRef = useRef(null);
-  const outlineRef = useRef(null);
-  const [outlineLength, setOutlineLength] = useState(0);
   const timerSectionRef = useRef(null);
-  const [timerDimensions, setTimerDimensions] = useState({ width: 0, height: 0 });
-  const audioRef = useRef(null);
+  const [timerDimensions, setTimerDimensions] = useState({ width: 600, height: 400 });
 
-  // Session restoration on component mount
+  const {
+    earliestDate,
+    ...navigation
+  } = usePomodoroNavigation(null, isCompact);
+
+  const {
+    stats, weekStats, monthStats, streaks,
+    graphData, isGraphLoading,
+    refreshAllData
+  } = usePomodoroData(navigation.dayDate, navigation.weekStart, navigation.monthDate, navigation.graphViewType, navigation.graphWeekStart, navigation.graphMonthDate);
+
+  const {
+    mode, setMode,
+    workDuration, setWorkDuration,
+    shortBreak, setShortBreak,
+    longBreak, setLongBreak,
+    timer,
+    isRunning, isPaused,
+    celebrate,
+    audioRef,
+    startSession, pauseSession, resumeSession, handleStop,
+    formatTime,
+    MODES
+  } = usePomodoro(refreshAllData);
+
+  const {
+    getGraphTitle, getDayLabel, getWeekLabel, getMonthLabel,
+    handlePrevDay, handleNextDay, handleReturnToToday,
+    handlePrevWeek, handleNextWeek, handleReturnToWeek,
+    handlePrevMonth, handleNextMonth, handleReturnToMonth,
+    handleGraphPrevious, handleGraphNext, handleGraphReturnToCurrent,
+    setDayDate, setGraphViewType
+  } = navigation;
+
   useEffect(() => {
-    const restoreSession = async () => {
-      const savedSession = getSessionState();
-      if (!savedSession) {
-        // No session, set timer to default for current mode
-        if (mode === "pomodoro") setTimer(workDuration * 60);
-        else if (mode === "short_break") setTimer(shortBreak * 60);
-        else setTimer(longBreak * 60);
-        return;
-      }
-
-      const {
-        mode: savedMode,
-        startTime,
-        sessionId: savedSessionId,
-        pausedAt,
-        pausedDuration,
-        totalDuration,
-        workDuration: savedWorkDuration,
-        shortBreak: savedShortBreak,
-        longBreak: savedLongBreak
-      } = savedSession;
-
-      // Restore durations first
-      if (savedWorkDuration !== undefined) setWorkDuration(savedWorkDuration);
-      if (savedShortBreak !== undefined) setShortBreak(savedShortBreak);
-      if (savedLongBreak !== undefined) setLongBreak(savedLongBreak);
-      
-      // Set mode
-      setMode(savedMode);
-
-      // Calculate remaining time
-      const remainingTime = getPomodoroRemainingTime(savedSession);
-
-      if (remainingTime <= 0) {
-        // Session should have finished while user was away
-        if (savedSessionId && savedMode === "pomodoro") {
-          try {
-            // Log the completed session
-            const timeCompleted = totalDuration / 60; // Convert to minutes
-            await api.finishPomodoroSession(savedSessionId, true, timeCompleted);
-            
-            // Refresh stats after completing the session
-            fetchStats(dayDate);
-            fetchWeekStats(weekStart);
-            fetchMonthStats(monthDate);
-            fetchEarliestDate();
-            fetchStreaks();
-            
-            // Show celebration if it was a work session
-            setCelebrate(true);
-            setTimeout(() => setCelebrate(false), 2000);
-            
-            // Play sound
-            if (audioRef.current) {
-              audioRef.current.currentTime = 0;
-              audioRef.current.play();
-            }
-          } catch (error) {
-            console.error("Error finishing restored session:", error);
-          }
-        }
-        
-        // Reset to default state
-        clearSessionState();
-        setTimer(savedMode === "pomodoro" ? (savedWorkDuration || workDuration) * 60 : 
-                savedMode === "short_break" ? (savedShortBreak || shortBreak) * 60 : 
-                (savedLongBreak || longBreak) * 60);
-        setIsRunning(false);
-        setIsPaused(false);
-        setSessionId(null);
-      } else {
-        // Session is still active, restore state
-        setTimer(remainingTime);
-        setSessionId(savedSessionId);
-        
-        if (pausedAt) {
-          // Session was paused
-          setIsRunning(false);
-          setIsPaused(true);
-        } else {
-          // Session was running, resume it
-          setIsRunning(true);
-          setIsPaused(false);
-          intervalRef.current = setInterval(() => {
-            setTimer((prev) => prev - 1);
-          }, 1000);
-        }
-      }
-    };
-
-    restoreSession();
-  }, []); // Only run on mount
+    const handleResize = () => setIsCompact(window.innerWidth < 700);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useLayoutEffect(() => {
     const updateDimensions = () => {
@@ -163,332 +58,46 @@ const PomodoroPage = () => {
         setTimerDimensions({ width, height });
       }
     };
-
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  const fetchEarliestDate = async () => {
-    const data = await api.getEarliestPomodoroDate();
-    setEarliestDate(new Date(data.earliest_date));
-  };
-
-  const fetchStreaks = async () => {
-    try {
-      const data = await api.getPomodoroStreaks();
-      setStreaks(data);
-    } catch (e) {
-      setStreaks({ current_day_streak: 0, current_week_streak: 0 });
-    }
-  };
-
-  // Update timer when mode or durations change, but only if not running/paused and timer is not null
-  useEffect(() => {
-    if (timer === null) return; // Don't update until restoration is done
-    if (!isRunning && !isPaused) {
-      if (mode === "pomodoro") setTimer(workDuration * 60);
-      else if (mode === "short_break") setTimer(shortBreak * 60);
-      else setTimer(longBreak * 60);
-    }
-  }, [mode, workDuration, shortBreak, longBreak, isRunning, isPaused]);
-
-  useEffect(() => {
-    fetchStats(dayDate);
-  }, [dayDate]);
-
-  useEffect(() => {
-    fetchWeekStats(weekStart);
-  }, [weekStart]);
-
-  useEffect(() => {
-    fetchMonthStats(monthDate);
-  }, [monthDate]);
-
-  // Save durations to localStorage when changed
-  useEffect(() => {
-    saveDurations(workDuration, shortBreak, longBreak);
-  }, [workDuration, shortBreak, longBreak]);
-
-  useEffect(() => {
-    const handleResize = () => setIsCompact(window.innerWidth < 700);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    fetchEarliestDate();
-    fetchStreaks();
-  }, []);
-
-  useEffect(() => {
-    if (outlineRef.current) {
-      setOutlineLength(outlineRef.current.getTotalLength());
-    }
-  }, []);
-
-  // Animation for the rectangular outline (proportional to time)
+  const outlineRef = useRef(null);
   useEffect(() => {
     if (!outlineRef.current || !timerDimensions.width || !timerDimensions.height) return;
 
     const totalDuration =
-      mode === "pomodoro"
-        ? workDuration * 60
-        : mode === "short_break"
-        ? shortBreak * 60
-        : longBreak * 60;
+      mode === "pomodoro" ? workDuration * 60 :
+      mode === "short_break" ? shortBreak * 60 :
+      longBreak * 60;
 
     const strokeWidth = 5;
     const perimeter = (timerDimensions.width - strokeWidth) * 2 + (timerDimensions.height - strokeWidth) * 2;
-    outlineRef.current.style.strokeDasharray = perimeter;
+    if (outlineRef.current) {
+        outlineRef.current.style.strokeDasharray = perimeter;
+    }
 
     if (totalDuration > 0) {
       const percent = Math.max(0, Math.min(1, timer / totalDuration));
       const offset = perimeter * (1 - percent);
-      outlineRef.current.style.strokeDashoffset = offset;
-    } else {
-      outlineRef.current.style.strokeDashoffset = 0;
+      if (outlineRef.current) {
+        outlineRef.current.style.strokeDashoffset = offset;
+      }
+    } else if (outlineRef.current) {
+        outlineRef.current.style.strokeDashoffset = 0;
     }
   }, [timer, mode, workDuration, shortBreak, longBreak, timerDimensions]);
 
-  const fetchStats = async (dateObj) => {
-    try {
-      const dateStr = format(dateObj, "yyyy-MM-dd");
-      const data = await api.getPomodoroStats("day", dateStr);
-      setStats(data);
-    } catch (e) { setStats(null); }
-  };
-  const fetchWeekStats = async (weekStartObj) => {
-    try {
-      const weekStartStr = format(weekStartObj, "yyyy-MM-dd");
-      const data = await api.getPomodoroStats("week", weekStartStr);
-      setWeekStats(data);
-    } catch (e) { setWeekStats(null); }
-  };
-  const fetchMonthStats = async (monthObj) => {
-    try {
-      const monthStr = format(monthObj, "yyyy-MM");
-      const data = await api.getPomodoroStats("month", monthStr);
-      setMonthStats(data);
-    } catch (e) { setMonthStats(null); }
-  };
-
-  const startSession = async () => {
-    let newSessionId = null;
-    
-    if (mode === "pomodoro") {
-      const res = await api.startPomodoroSession(workDuration);
-      newSessionId = res.session_id;
-      setSessionId(newSessionId);
-    }
-    
-    setIsRunning(true);
-    setIsPaused(false);
-    
-    // Save session state to localStorage
-    const sessionData = {
-      mode,
-      startTime: new Date().toISOString(),
-      sessionId: newSessionId,
-      pausedAt: null,
-      pausedDuration: 0,
-      totalDuration: mode === "pomodoro" ? workDuration * 60 : 
-                     mode === "short_break" ? shortBreak * 60 : 
-                     longBreak * 60,
-      workDuration,
-      shortBreak,
-      longBreak
-    };
-    saveSessionState(sessionData);
-    
-    intervalRef.current = setInterval(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
-  };
-
-  const pauseSession = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setIsRunning(false);
-    setIsPaused(true);
-    
-    // Update session state with pause time
-    const savedSession = getSessionState();
-    if (savedSession) {
-      const updatedSession = {
-        ...savedSession,
-        pausedAt: new Date().toISOString()
-      };
-      saveSessionState(updatedSession);
-    }
-  };
-
-  const resumeSession = () => {
-    setIsRunning(true);
-    setIsPaused(false);
-    
-    // Update session state - calculate accumulated pause time
-    const savedSession = getSessionState();
-    if (savedSession && savedSession.pausedAt) {
-      const pauseStart = new Date(savedSession.pausedAt);
-      const pauseEnd = new Date();
-      const thisPauseDuration = Math.floor((pauseEnd - pauseStart) / 1000);
-      
-      const updatedSession = {
-        ...savedSession,
-        pausedAt: null,
-        pausedDuration: (savedSession.pausedDuration || 0) + thisPauseDuration
-      };
-      saveSessionState(updatedSession);
-      
-      // Recalculate timer using the helper function
-      const remainingTime = getPomodoroRemainingTime(updatedSession);
-      setTimer(Math.max(0, remainingTime));
-    }
-    
-    intervalRef.current = setInterval(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
-  };
-
-  const finishSession = async (completed = true) => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setIsRunning(false);
-    setIsPaused(false);
-    
-    // Clear session state from localStorage
-    clearSessionState();
-    
-    if (sessionId && mode === "pomodoro") {
-      // Calculate ACTUAL time completed in minutes
-      const timeCompleted = (workDuration * 60 - timer) / 60;
-      await api.finishPomodoroSession(sessionId, completed, timeCompleted);
-      setSessionId(null);
-      fetchStats(dayDate);
-      fetchWeekStats(weekStart);
-      fetchMonthStats(monthDate);
-      fetchEarliestDate(); // Refetch earliest date
-      fetchStreaks(); // Refetch streaks
-    }
-  };
-
-  useEffect(() => {
-    if (isRunning && timer <= 0) {
-      finishSession(true);
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play();
-      }
-      if (mode === 'pomodoro') {
-        setCelebrate(true);
-        setTimeout(() => setCelebrate(false), 2000); // Animation duration
-      }
-    }
-  }, [timer, isRunning, mode]);
-
-  // Periodic sync with accurate time calculation (every 10 seconds)
-  useEffect(() => {
-    if (!isRunning || isPaused) return;
-
-    const syncInterval = setInterval(() => {
-      const savedSession = getSessionState();
-      if (savedSession) {
-        const accurateRemaining = getPomodoroRemainingTime(savedSession);
-        setTimer(Math.max(0, accurateRemaining));
-      }
-    }, 10000); // Sync every 10 seconds
-
-    return () => clearInterval(syncInterval);
-  }, [isRunning, isPaused]);
-
-  const handleStop = () => finishSession(false);
-
-  const formatTime = (t) => {
-    const totalSeconds = Math.floor(t); // Round down to nearest second
-    return `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`;
-  };
-
-  // Navigation handlers
-  const handlePrevDay = () => {
-    if (dayDate > earliestDate) setDayDate(subDays(dayDate, 1));
-  };
-  const handleNextDay = () => {
-    if (!isToday(dayDate)) setDayDate(addDays(dayDate, 1));
-  };
-  const handlePrevWeek = () => {
-    if (weekStart > earliestDate) setWeekStart(subWeeks(weekStart, 1));
-  };
-  const handleNextWeek = () => {
-    if (!isThisWeek(weekStart, { weekStartsOn: 1 })) setWeekStart(addWeeks(weekStart, 1));
-  };
-  const handlePrevMonth = () => {
-    if (monthDate > earliestDate) setMonthDate(subMonths(monthDate, 1));
-  };
-  const handleNextMonth = () => {
-    if (!isThisMonth(monthDate)) setMonthDate(addMonths(monthDate, 1));
-  };
-
-  const handleReturnToToday = () => setDayDate(new Date());
-  const handleReturnToWeek = () => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const handleReturnToMonth = () => setMonthDate(startOfMonth(new Date()));
-
-  // Dynamic label helpers
-  const getDayLabel = () => {
-    const now = new Date();
-    if (isToday(dayDate)) return isCompact ? "Today" : "Today's Stats";
-    if (isToday(addDays(dayDate, 1))) return isCompact ? "Yesterday" : "Yesterday's Stats";
-
-    const daysDiff = differenceInDays(now, dayDate);
-
-    if (daysDiff > 1 && daysDiff < 7) {
-        return `${format(dayDate, "EEEE")}${isCompact ? '' : "'s Stats"}`;
-    }
-
-    if (isThisYear(dayDate)) {
-        return `${format(dayDate, "MMMM do")}${isCompact ? '' : "'s Stats"}`;
-    }
-
-    return `${format(dayDate, "MMMM do, yyyy")}${isCompact ? '' : "'s Stats"}`;
-  };
-
-  const getWeekLabel = () => {
-    const options = { weekStartsOn: 1 };
-    const weekNum = getWeek(weekStart, options);
-    const year = getWeekYear(weekStart, options);
-    const thisWeek = isThisWeek(weekStart, { weekStartsOn: 1 });
-    const lastWeek = isThisWeek(addWeeks(weekStart, 1), { weekStartsOn: 1 });
-
-    if (thisWeek) return isCompact ? "This Week" : "This Week's Stats";
-    if (lastWeek) return isCompact ? "Last Week" : "Last Week's Stats";
-
-    const currentYear = new Date().getFullYear();
-    const displayYear = year !== currentYear;
-
-    return isCompact
-      ? `Week ${weekNum}`
-      : `Week ${weekNum}${displayYear ? `, ${year}` : ""} Stats`;
-  };
-  const getMonthLabel = () => {
-    const thisMonth = isThisMonth(monthDate);
-    const lastMonth = isThisMonth(addMonths(monthDate, 1));
-    if (thisMonth) return isCompact ? "This Month" : "This Month's Stats";
-    if (lastMonth) return isCompact ? "Last Month" : "Last Month's Stats";
-    return isCompact
-      ? `${format(monthDate, isThisYear(monthDate) ? "MMM" : "MMM yyyy")}`
-      : `${format(monthDate, isThisYear(monthDate) ? "MMMM" : "MMMM, yyyy")}'s Stats`;
-  };
 
   return (
     <div className="page-container">
-      <audio ref={audioRef} src="public/ding.mp3" preload="auto" />
+      <audio ref={audioRef} src="/ding.mp3" preload="auto" />
       {celebrate && (
         <div className="celebration">
-          {[...Array(15)].map((_, i) => {
-            const style = {
-              '--x': `${Math.random() * 400 - 200}px`,
-              '--y': `${Math.random() * 400 - 200}px`,
-            };
-            return <div key={i} className="particle" style={style} />;
-          })}
+          {[...Array(15)].map((_, i) => (
+            <div key={i} className="particle" style={{ '--x': `${Math.random() * 400 - 200}px`, '--y': `${Math.random() * 400 - 200}px` }} />
+          ))}
         </div>
       )}
       <div className="pomo-header">
@@ -507,8 +116,7 @@ const PomodoroPage = () => {
           ))}
         </div>
       </div>
-      {/* Only render timer section if timer is not null */}
-      {timer !== null && (
+      {timer !== null && timerDimensions.width > 0 && timerDimensions.height > 0 && (
         <div className="pomo-timer-section" ref={timerSectionRef}>
           <svg className="timer-outline-svg" viewBox={`0 0 ${timerDimensions.width} ${timerDimensions.height}`}>
             <path
@@ -534,7 +142,7 @@ const PomodoroPage = () => {
               {isPaused ? (
                 <>
                   <button className="pomo-main-btn" style={{ background: MODES.find(m => m.key === mode).color }} onClick={resumeSession}>RESUME</button>
-                  <button className="pomo-main-btn danger" onClick={() => finishSession(false)}>END</button>
+                  <button className="pomo-main-btn danger" onClick={handleStop}>END</button>
                 </>
               ) : null}
             </div>
@@ -547,9 +155,8 @@ const PomodoroPage = () => {
         </div>
       )}
       <div className="pomo-stats-multi">
-        {/* Weekly Stats */}
-        <div className="pomo-stats">
-          <button className="return-btn" onClick={handleReturnToWeek}>↺</button>
+        <div className="pomo-stats" style={{ position: 'relative' }}>
+          <button className="return-btn" style={{ position: 'absolute', left: '50%', top: 0, transform: 'translate(-50%, -50%)' }} onClick={handleReturnToWeek}>↺</button>
           <div className="pomo-stats-nav">
             <button className="pomo-arrow-btn" onClick={handlePrevWeek}>&lt;</button>
             <h2 className="pomo-stats-label">{getWeekLabel()}</h2>
@@ -564,7 +171,6 @@ const PomodoroPage = () => {
             <div>Loading stats...</div>
           )}
         </div>
-        {/* Daily Stats */}
         <div className="pomo-stats" id="pomo-today">
           <button className="return-btn" onClick={handleReturnToToday}>↺</button>
           <div className="pomo-stats-nav">
@@ -581,9 +187,8 @@ const PomodoroPage = () => {
             <div>Loading stats...</div>
           )}
         </div>
-        {/* Monthly Stats */}
-        <div className="pomo-stats">
-          <button className="return-btn" onClick={handleReturnToMonth}>↺</button>
+        <div className="pomo-stats" style={{ position: 'relative' }}>
+          <button className="return-btn" style={{ position: 'absolute', left: '50%', top: 0, transform: 'translate(-50%, -50%)' }} onClick={handleReturnToMonth}>↺</button>
           <div className="pomo-stats-nav">
             <button className="pomo-arrow-btn" onClick={handlePrevMonth}>&lt;</button>
             <h2 className="pomo-stats-label">{getMonthLabel()}</h2>
@@ -599,6 +204,17 @@ const PomodoroPage = () => {
           )}
         </div>
       </div>
+      <PomodoroLineGraph
+        data={graphData}
+        viewType={navigation.graphViewType}
+        onPrevious={handleGraphPrevious}
+        onNext={handleGraphNext}
+        onReturnToCurrent={handleGraphReturnToCurrent}
+        onViewChange={setGraphViewType}
+        title={getGraphTitle()}
+        isLoading={isGraphLoading}
+        onPointClick={(date) => setDayDate(date)}
+      />
       <div style={{marginTop: '1.5rem', textAlign: 'center'}}>
         <div>Worked {streaks.current_day_streak} day{streaks.current_day_streak === 1 ? '' : 's'} in a row</div>
         <div>Worked {streaks.current_week_streak} week{streaks.current_week_streak === 1 ? '' : 's'} in a row</div>

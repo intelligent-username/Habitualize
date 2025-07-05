@@ -1,5 +1,4 @@
 /* --- WEEK BAR --- */
-
 .week-bar {
     margin-bottom: 1.5rem;
     background: var(--bg-secondary);
@@ -90,7 +89,7 @@
     background: #0097a7;
 }
 
-/* --- MONTH VIEW / CALENDAR --- */
+/* --- MONTH VIEW/CALENDAR --- */
 .month-view-modal {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;

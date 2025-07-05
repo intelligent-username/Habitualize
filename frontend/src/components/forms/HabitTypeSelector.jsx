@@ -1,4 +1,5 @@
 import React from "react";
+import TemplateForm from "./template.jsx";
 import { TimerPicker } from "../ui";
 import { isMobile } from "../../utils/constants";
 
@@ -6,7 +7,7 @@ import { isMobile } from "../../utils/constants";
  * HabitTypeSelector - Component for selecting habit type and configuring type-specific options
  * Handles binary, reverse_binary, timer, counter, and entry-based habit types
  */
-const HabitTypeSelector = ({
+export const HabitTypeSelector = ({
     type,
     setType,
     targetValue,
@@ -18,24 +19,30 @@ const HabitTypeSelector = ({
     setTimerMinutes,
     setTimerSeconds
 }) => {
+    const fields = [
+        {
+            label: "Type",
+            type: "select",
+            value: type,
+            onChange: e => setType(e.target.value),
+            options: [
+                { value: "binary", label: "Binary (Done/Undone)" },
+                { value: "reverse_binary", label: "Reverse Binary (Fail if unchecked)" },
+                { value: "timer", label: "Timer" },
+                { value: "counter", label: "Counter" },
+                { value: "entry", label: "Entry-based" }
+            ],
+            marginTop: "1rem"
+        }
+    ];
     return (
-        <>
-            <label className="habit-form-label" style={{ marginTop: "1rem" }}>Type</label>
-            <select value={type} onChange={e => setType(e.target.value)}>
-                <option value="binary">Binary (Done/Undone)</option>
-                <option value="reverse_binary">Reverse Binary (Fail if unchecked)</option>
-                <option value="timer">Timer</option>
-                <option value="counter">Counter</option>
-                <option value="entry">Entry-based</option>
-            </select>
-            
+        <TemplateForm fields={fields}>
             {type === "timer" ? (
                 <>
                     <label className="habit-form-label" style={{ marginTop: "1rem" }}>
                         Target Time
                     </label>
                     {isMobile() ? (
-                        // Mobile: scroll wheel picker
                         <TimerPicker
                             hours={timerHours}
                             minutes={timerMinutes}
@@ -45,7 +52,6 @@ const HabitTypeSelector = ({
                             setSeconds={setTimerSeconds}
                         />
                     ) : (
-                        // Desktop: single input for seconds
                         <input
                             type="number"
                             min="1"
@@ -70,8 +76,6 @@ const HabitTypeSelector = ({
                     />
                 </>
             ))}
-        </>
+        </TemplateForm>
     );
 };
-
-export default HabitTypeSelector;

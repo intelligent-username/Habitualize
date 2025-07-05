@@ -5,6 +5,10 @@
 
 import { format, startOfWeek, parseISO, addDays, subDays } from 'date-fns';
 
+// Constants
+const DAYS_IN_WEEK = 7;
+const MS_TO_SECONDS = 1000;
+
 /**
  * Parse ISO date string to local Date object
  * @param {string} isoString - ISO date string (YYYY-MM-DD)
@@ -41,10 +45,10 @@ export function getStartOfWeek(date) {
 /**
  * Get array of 7 dates starting from given date
  * @param {Date} startDate - Starting date
- * @returns {Date[]} - Array of 7 consecutive dates
+ * @returns {Date[]} Array of 7 consecutive dates
  */
 export function getWeekDates(startDate) {
-    return Array.from({ length: 7 }, (_, i) => {
+    return Array.from({ length: DAYS_IN_WEEK }, (_, i) => {
         const d = new Date(startDate);
         d.setDate(d.getDate() + i);
         return d;
@@ -86,20 +90,20 @@ export function getCurrentWeekStart(selectedDate) {
 /**
  * Navigate to previous week
  * @param {string} selectedDate - Current selected date
- * @returns {string} - Previous week date string
+ * @returns {string} Previous week date string
  */
 export function getPreviousWeek(selectedDate) {
-    const prevWeek = subDays(parseISO(selectedDate), 7);
+    const prevWeek = subDays(parseISO(selectedDate), DAYS_IN_WEEK);
     return getLocalDateString(prevWeek);
 }
 
 /**
  * Navigate to next week
  * @param {string} selectedDate - Current selected date
- * @returns {string} - Next week date string
+ * @returns {string} Next week date string
  */
 export function getNextWeek(selectedDate) {
-    const nextWeek = addDays(parseISO(selectedDate), 7);
+    const nextWeek = addDays(parseISO(selectedDate), DAYS_IN_WEEK);
     return getLocalDateString(nextWeek);
 }
 
@@ -107,7 +111,7 @@ export function getNextWeek(selectedDate) {
  * Get number of days in a given month
  * @param {number} year - Year (4 digits)
  * @param {number} month - Month (0-11, JavaScript month indexing)
- * @returns {number} - Number of days in the month
+ * @returns {number} Number of days in the month
  * @example getDaysInMonth(2025, 4) // 31 (May has 31 days)
  */
 export function getDaysInMonth(year, month) {
@@ -122,7 +126,7 @@ export function getDaysInMonth(year, month) {
  * @param {string|null} sessionData.pausedAt - ISO timestamp when session was paused (null if not paused)
  * @param {number} sessionData.totalDuration - Total session duration in seconds
  * @param {number} sessionData.pausedDuration - Total time spent paused in seconds
- * @returns {number} - Remaining time in seconds (0 if session should be finished)
+ * @returns {number} Remaining time in seconds (0 if session should be finished)
  */
 export function getPomodoroRemainingTime(sessionData) {
     const { startTime, pausedAt, totalDuration, pausedDuration } = sessionData;
@@ -139,10 +143,10 @@ export function getPomodoroRemainingTime(sessionData) {
     if (pausedAt) {
         // Session is paused - use time up to when it was paused
         const pauseTime = new Date(pausedAt);
-        elapsedTime = Math.floor((pauseTime - sessionStart) / 1000);
+        elapsedTime = Math.floor((pauseTime - sessionStart) / MS_TO_SECONDS);
     } else {
         // Session is running - use current time
-        elapsedTime = Math.floor((now - sessionStart) / 1000);
+        elapsedTime = Math.floor((now - sessionStart) / MS_TO_SECONDS);
     }
     
     // Subtract any time spent paused from elapsed time

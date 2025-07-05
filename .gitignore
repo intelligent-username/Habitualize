@@ -1,9 +1,12 @@
 node_modules/
-*.db
+.vscode/*
+misc/
 __pycache__/
+copies/
+
+*.db
 *.pyc
 *.pyo
-copies/
 
 logs
 *.log
@@ -18,8 +21,7 @@ dist
 dist-ssr
 *.local
 
-.vscode/*
-!.vscode/extensions.json
+
 .idea
 .DS_Store
 *.suo
@@ -30,3 +32,4 @@ dist-ssr
 
 migrations.py
 raw_quotes.txt
+gitlog.txt

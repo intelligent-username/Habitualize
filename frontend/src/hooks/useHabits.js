@@ -1,6 +1,9 @@
 /**
  * Custom hook for habit operations
  * Handles individual habit CRUD and completion tracking
+ * 
+ * @param {Function} refreshSequences - Optional callback for sequence refresh (deprecated)
+ * @returns {Object} Habit operations and state
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,7 +15,7 @@ export const useHabits = (refreshSequences) => {
     // Toggle completion mutation
     const toggleCompletionMutation = useMutation({
         mutationFn: async ({ habitId, completed, value, date }) => {
-            await apiService.updateHabitCompletion(habitId, {
+            return await apiService.updateHabitCompletion(habitId, {
                 completed: completed ? 1 : 0,
                 value: value !== undefined ? value : null,
                 date
@@ -20,6 +23,9 @@ export const useHabits = (refreshSequences) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sequences'] });
+        },
+        onError: (error) => {
+            console.error('Failed to toggle habit completion:', error);
         }
     });
 
@@ -30,16 +36,22 @@ export const useHabits = (refreshSequences) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sequences'] });
+        },
+        onError: (error) => {
+            console.error('Failed to update habit:', error);
         }
     });
 
     // Delete habit mutation
     const deleteHabitMutation = useMutation({
         mutationFn: async (habitId) => {
-            await apiService.deleteHabit(habitId);
+            return await apiService.deleteHabit(habitId);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sequences'] });
+        },
+        onError: (error) => {
+            console.error('Failed to delete habit:', error);
         }
     });
 
@@ -48,7 +60,9 @@ export const useHabits = (refreshSequences) => {
         return useQuery({
             queryKey: ['habitHistory', habitId],
             queryFn: () => apiService.getHabitHistory(habitId),
-            enabled: !!habitId
+            enabled: !!habitId,
+            staleTime: 1000 * 60 * 5, // 5 minutes
+            retry: 2
         });
     };
 
@@ -61,14 +75,18 @@ export const useHabits = (refreshSequences) => {
         deleteHabitMutation.mutateAsync(habitId);
 
     return {
+        // State
         loading:
-            toggleCompletionMutation.isLoading ||
-            updateHabitMutation.isLoading ||
-            deleteHabitMutation.isLoading,
+            toggleCompletionMutation.isPending ||
+            updateHabitMutation.isPending ||
+            deleteHabitMutation.isPending,
         error:
             toggleCompletionMutation.error?.message ||
             updateHabitMutation.error?.message ||
-            deleteHabitMutation.error?.message || null,
+            deleteHabitMutation.error?.message || 
+            null,
+        
+        // Actions
         toggleCompletion,
         updateHabit,
         deleteHabit,
