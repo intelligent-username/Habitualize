@@ -11,7 +11,7 @@ const TemplateForm = ({
     ...rest
 }) => {
     return (
-        <form {...rest}>
+        <div {...rest}>
             {fields.map((field, idx) => {
                 if (field.type === "select") {
                     return (
@@ -44,7 +44,7 @@ const TemplateForm = ({
                 return field.render ? field.render() : null;
             })}
             {children}
-        </form>
+        </div>
     );
 };
 

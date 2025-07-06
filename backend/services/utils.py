@@ -61,3 +61,26 @@ def calculate_start_date(period, start_day_str='sunday'):
     action = period_actions.get(period)
     
     return action() if action else None
+
+
+def calculate_end_date(period, start_date):
+    """
+    Calculates the end date for a given period (weekly, monthly, yearly).
+
+    Args:
+        period (str): The period ('weekly', 'monthly', 'yearly').
+        start_date (datetime.date): The start date of the period.
+
+    Returns:
+        datetime.date: The calculated end date.
+        None: If the period is invalid.
+    """
+    if period == 'weekly':
+        return start_date + datetime.timedelta(days=6)
+    elif period == 'monthly':
+        next_month = start_date.replace(day=28) + datetime.timedelta(days=4)  # Go to next month
+        return next_month.replace(day=1) - datetime.timedelta(days=1)  # Last day of current month
+    elif period == 'yearly':
+        return start_date.replace(month=12, day=31)
+    else:
+        return None

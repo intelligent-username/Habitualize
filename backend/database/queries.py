@@ -41,7 +41,7 @@ FETCH_COMPLETION = "SELECT completed, value FROM habit_history WHERE habit_id = 
 
 FETCH_SUM_SO_FAR  = "SELECT SUM(value) FROM habit_history WHERE habit_id = ? AND date = ?"
 
-FETCH_CUMULATIVE_SO_FAR = "SELECT SUM(value) FROM habit_history WHERE habit_id = ? AND date >= ?"
+FETCH_CUMULATIVE_SO_FAR = "SELECT SUM(value) FROM habit_history WHERE habit_id = ? AND date >= ? AND date <= ?"
 
 FETCH_TYPE_AND_CUMULATIVE = "SELECT type, cumulative FROM habits WHERE id = ?"
 

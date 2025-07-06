@@ -132,6 +132,11 @@ class ApiService {
         return this.request(`/habits/${id}/history`);
     }
 
+    // Cumulative Progress for Habits
+    async getCumulativeProgress(habitId) {
+        return this.request(`/habits/${habitId}/cumulative-progress`);
+    }
+
     // Pomodoro Section
     async startPomodoroSession(goal_duration_minutes) {
         return this.request('/api/pomodoro/start', {

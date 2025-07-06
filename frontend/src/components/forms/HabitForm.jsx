@@ -183,6 +183,7 @@ export const HabitForm = ({
         [{ h: 0, m: 0, s: 0 }, { h: 0, m: 0, s: 0 }],
         [{ h: 0, m: 0, s: 0 }, { h: 0, m: 0, s: 0 }]
     ]);
+    const [cumulativeFormError, setCumulativeFormError] = useState("");
 
     // Initialization
     useHabitFormInitialization({
@@ -265,6 +266,22 @@ export const HabitForm = ({
         onClose
     });
 
+    // --- SUBMIT HANDLER WITH VALIDATION ---
+    const handleValidatedSubmit = (formData) => {
+        if (habitKind === "cumulative") {
+            if (!cumulativeGoal || isNaN(Number(cumulativeGoal)) || Number(cumulativeGoal) <= 0) {
+                setCumulativeFormError("Please enter a valid goal (must be a positive number).");
+                return;
+            }
+            if (!cumulativePeriod || !["weekly","monthly","yearly"].includes(cumulativePeriod)) {
+                setCumulativeFormError("Please select a valid period.");
+                return;
+            }
+        }
+        setCumulativeFormError("");
+        handleSubmit(formData);
+    };
+
     const fields = [
         {
             label: "Habit name",
@@ -290,9 +307,9 @@ export const HabitForm = ({
         }
     ];
     return (
-        <TemplateForm className="add-habit" onSubmit={e => {
+        <form className="add-habit" onSubmit={e => {
             e.preventDefault();
-            handleSubmit({
+            handleValidatedSubmit({
                 habitKind,
                 newHabit,
                 color,
@@ -309,65 +326,68 @@ export const HabitForm = ({
                 cumulativeGoal,
                 icon
             });
-        }} fields={fields}>
-            {/* Icon picker */}
-            <label className="habit-form-label" style={{ marginTop: "1rem" }}>Icon</label>
-            <IconPicker selectedIcon={icon} onSelect={setIcon} />
-            {/* Color and Category components */}
-            <ColorPicker
-                color={color}
-                setColor={setColor}
-                showColorGrid={showColorGrid}
-                setShowColorGrid={setShowColorGrid}
-                colorBtnRef={colorBtnRef}
-            />
-            <CategorySelector
-                categories={categories}
-                categoryId={categoryId}
-                onCategoryChange={handleCategoryChange}
-            />
-            {/* Normal habit form */}
-            {habitKind === "normal" && (
-                <HabitTypeSelector
-                    type={type}
-                    setType={setType}
-                    targetValue={targetValue}
-                    setTargetValue={setTargetValue}
-                    timerHours={timerHours}
-                    timerMinutes={timerMinutes}
-                    timerSeconds={timerSeconds}
-                    setTimerHours={setTimerHours}
-                    setTimerMinutes={setTimerMinutes}
-                    setTimerSeconds={setTimerSeconds}
+        }}>
+            <TemplateForm fields={fields}>
+                {/* Icon picker */}
+                <label className="habit-form-label" style={{ marginTop: "1rem" }}>Icon</label>
+                <IconPicker selectedIcon={icon} onSelect={setIcon} />
+                {/* Color and Category components */}
+                <ColorPicker
+                    color={color}
+                    setColor={setColor}
+                    showColorGrid={showColorGrid}
+                    setShowColorGrid={setShowColorGrid}
+                    colorBtnRef={colorBtnRef}
                 />
-            )}
-            {/* Sequence form */}
-            {habitKind === "sequence" && (
-                <SequenceForm
-                    sequenceCount={sequenceCount}
-                    setSequenceCount={setSequenceCount}
-                    sequenceHabits={sequenceHabits}
-                    handleSequenceHabitChange={handleSequenceHabitChange}
-                    sequenceTimers={sequenceTimers}
-                    setSequenceTimers={setSequenceTimers}
-                    handleAddSubsequence={handleAddSubsequence}
-                    handleSubsequenceHabitChange={handleSubsequenceHabitChange}
-                    subsequenceTimers={subsequenceTimers}
-                    setSubsequenceTimers={setSubsequenceTimers}
+                <CategorySelector
+                    categories={categories}
+                    categoryId={categoryId}
+                    onCategoryChange={handleCategoryChange}
                 />
-            )}
-            {/* Cumulative form */}
-            {habitKind === "cumulative" && (
-                <CumulativeForm
-                    cumulativePeriod={cumulativePeriod}
-                    setCumulativePeriod={setCumulativePeriod}
-                    cumulativeGoal={cumulativeGoal}
-                    setCumulativeGoal={setCumulativeGoal}
-                />
-            )}
-            <button type="submit" className="add-habit-button" style={{ marginTop: "1.5rem" }}>
-                {editingSequenceId || editingHabit ? "Save Changes" : "Add Habit"}
-            </button>
-        </TemplateForm>
+                {/* Normal habit form */}
+                {habitKind === "normal" && (
+                    <HabitTypeSelector
+                        type={type}
+                        setType={setType}
+                        targetValue={targetValue}
+                        setTargetValue={setTargetValue}
+                        timerHours={timerHours}
+                        timerMinutes={timerMinutes}
+                        timerSeconds={timerSeconds}
+                        setTimerHours={setTimerHours}
+                        setTimerMinutes={setTimerMinutes}
+                        setTimerSeconds={setTimerSeconds}
+                    />
+                )}
+                {/* Sequence form */}
+                {habitKind === "sequence" && (
+                    <SequenceForm
+                        sequenceCount={sequenceCount}
+                        setSequenceCount={setSequenceCount}
+                        sequenceHabits={sequenceHabits}
+                        handleSequenceHabitChange={handleSequenceHabitChange}
+                        sequenceTimers={sequenceTimers}
+                        setSequenceTimers={setSequenceTimers}
+                        handleAddSubsequence={handleAddSubsequence}
+                        handleSubsequenceHabitChange={handleSubsequenceHabitChange}
+                        subsequenceTimers={subsequenceTimers}
+                        setSubsequenceTimers={setSubsequenceTimers}
+                    />
+                )}
+                {/* Cumulative form */}
+                {habitKind === "cumulative" && (
+                    <CumulativeForm
+                        cumulativePeriod={cumulativePeriod}
+                        setCumulativePeriod={setCumulativePeriod}
+                        cumulativeGoal={cumulativeGoal}
+                        setCumulativeGoal={setCumulativeGoal}
+                        error={cumulativeFormError}
+                    />
+                )}
+                <button type="submit" className="add-habit-button" style={{ marginTop: "1.5rem" }}>
+                    {editingSequenceId || editingHabit ? "Save Changes" : "Add Habit"}
+                </button>
+            </TemplateForm>
+        </form>
     );
 };

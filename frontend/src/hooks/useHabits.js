@@ -23,6 +23,7 @@ export const useHabits = (refreshSequences) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sequences'] });
+            queryClient.invalidateQueries({ queryKey: ['cumulativeProgress'] });
         },
         onError: (error) => {
             console.error('Failed to toggle habit completion:', error);

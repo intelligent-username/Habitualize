@@ -2,6 +2,7 @@ import React from "react";
 import Icon from "../ui/Icon";
 import { COLOR_OPTIONS, formatTime } from "../../utils/constants";
 import { useHabitTimer, useHabitCounters } from "../../hooks/useHabitControls.js";
+import { useCumulativeProgress } from '../../hooks/useCumulativeProgress';
 
 /**
  * HabitItem - Component for displaying and interacting with individual habits
@@ -85,7 +86,47 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
         );
     }
 
-    // --- Checkboxes ---
+    // Cumulative habit display and input logic
+    const isCumulative = habit.cumulative === 1 || habit.cumulative === true;
+    let cumulativeControls = null;
+    let isCompleted = habit.completed;
+
+    if (isCumulative) {
+        const { data: progressData, isLoading: progressLoading, error: progressError } = useCumulativeProgress(habit.id);
+        if (progressLoading) {
+            cumulativeControls = <span className="cumulative-progress">Loading...</span>;
+        } else if (progressError) {
+            cumulativeControls = <span className="cumulative-progress error">Error</span>;
+        } else if (progressData) {
+            const { progress, goal, period, is_complete } = progressData;
+            const displayValue = `${progress}/${goal}`;
+            isCompleted = is_complete;
+            cumulativeControls = (
+                <div className="cumulative-control">
+                    <div className="counter-wheel">
+                        <button
+                            className="counter-wheel-btn counter-up-btn"
+                            onClick={() => toggleCompletion(habit.id, false, 1)}
+                            disabled={progress >= goal}
+                            title="Add 1"
+                        >▲</button>
+                        <div className="counter-wheel-value">
+                            {displayValue} <span className="cumulative-period">({period})</span>
+                        </div>
+                        <button
+                            className="counter-wheel-btn counter-down-btn"
+                            onClick={() => { if (progress > 0) { toggleCompletion(habit.id, false, -1); } }}
+                            disabled={progress <= 0}
+                            title="Remove 1"
+                        >▼</button>
+                    </div>
+                    <progress value={progress} max={goal} style={{ width: '100%', marginTop: 4 }} />
+                </div>
+            );
+        }
+    }
+
+    // Define handleCheckboxChange for non-cumulative habits
     const handleCheckboxChange = (e) => {
         const isChecked = e.target.checked;
         let valueToLog = isChecked ? 1 : 0; // Default for binary
@@ -97,15 +138,15 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
         } else if (habit.type === "counter" || habit.type === "entry") {
             valueToLog = isChecked ? (habit.target_value || 1) : 0;
         }
-        
+
         toggleCompletion(habit.id, isChecked, valueToLog);
     };
 
     return (
         <li
-            className={`habit${habit.completed ? " completed" : ""}${disabled ? " habit-disabled" : ""}`}
+            className={`habit${isCompleted ? " completed" : ""}${disabled ? " habit-disabled" : ""}`}
             style={{
-                backgroundColor: habit.completed ? "var(--bg-tertiary)" : colorHex,
+                backgroundColor: isCompleted ? "var(--bg-tertiary)" : colorHex,
                 color: textColor,
                 borderLeft: `10px solid ${colorHex}`,
                 transition: "background-color 0.3s, opacity 0.3s",
@@ -124,14 +165,21 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
                     <button onClick={() => deleteHabit(habit)} className="habit-action-btn habit-delete-btn" title="Delete">
                       <span role="img" aria-label="Delete">🗑️</span>
                     </button>
-                    <input
-                        type="checkbox"
-                        className="habit-checkbox"
-                        checked={habit.completed}
-                        onChange={handleCheckboxChange}
-                    />
+                    {!isCumulative && (
+                        <input
+                            type="checkbox"
+                            className="habit-checkbox"
+                            checked={isCompleted}
+                            onChange={handleCheckboxChange}
+                        />
+                    )}
                 </div>
-                {isSpecial && (
+                {isCumulative && (
+                    <div className="habit-controls">
+                        {cumulativeControls}
+                    </div>
+                )}
+                {!isCumulative && isSpecial && (
                     <div className="habit-controls">
                         {habitControls}
                     </div>

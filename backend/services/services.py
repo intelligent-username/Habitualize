@@ -14,6 +14,7 @@ from imports import *
 from database.connection import run_query
 from datetime import datetime
 import random
+from services.utils import calculate_end_date
 
 
 def get_cumulative_progress_details(habit_id):
@@ -24,38 +25,45 @@ def get_cumulative_progress_details(habit_id):
     try:
         # 1. Fetch the habit's goal and period from the database
         goal_details = run_query(FETCH_HABIT_GOAL_DETAILS, params=(habit_id,), fetch='one')
-        if not goal_details or not goal_details['cumulative_goal']:
+        goal = goal_details['cumulative_goal'] if goal_details else None
+        period = goal_details['cumulative_period'] if goal_details else None
+
+        # Robustly check for missing/invalid cumulative fields
+        if not goal_details or goal is None or period is None or str(period).strip() == '':
             current_app.logger.warning(
-                f"Attempted to get cumulative progress for habit_id {habit_id}, \
-                but it's not a valid cumulative habit."
+                f"Attempted to get cumulative progress for habit_id {habit_id}, but it's missing a valid cumulative_goal or cumulative_period."
             )
             return None
 
-        goal = goal_details['cumulative_goal']
-        period = goal_details['cumulative_period']
-
-        # 2. Calculate the correct start date using our utility
+        # 2. Calculate the correct start and end dates using our utility
         start_date = calculate_start_date(period, start_day_str='sunday')
-        if not start_date:
+        end_date = calculate_end_date(period, start_date)
+        if not start_date or not end_date:
             current_app.logger.error(
-                f"Invalid period '{period}' stored for habit_id {habit_id}.\
-                Cannot calculate start date."
+                f"Invalid period '{period}' stored for habit_id {habit_id}. Cannot calculate start or end date."
             )
             return None
 
         # 3. Fetch the progress sum for the calculated period
         start_str = start_date.isoformat()
-        progress_result = run_query(FETCH_CUMULATIVE_SO_FAR, params=(habit_id, start_str), fetch='one')
-        # Access by the first column's value, robustly handling if the result is None.
-        progress = progress_result[0] if progress_result else 0
+        end_str = end_date.isoformat()
+        progress_result = run_query(FETCH_CUMULATIVE_SO_FAR, params=(habit_id, start_str, end_str), fetch='one')
+        # Handle NULL from SUM() when no rows exist
+        progress = progress_result[0] if progress_result and progress_result[0] is not None else 0
 
-        # 4. Perform the comparison
-        is_complete = progress >= goal
+        # 4. Perform the comparison - ensure both are numbers
+        try:
+            progress_num = float(progress) if progress is not None else 0.0
+            goal_num = float(goal) if goal is not None else 0.0
+            is_complete = progress_num >= goal_num
+        except (ValueError, TypeError) as e:
+            current_app.logger.error(f"Comparison error for habit {habit_id}: progress={progress}, goal={goal}, error={e}")
+            return None
 
         # Return the result
         return {
-            "progress": progress,
-            "goal": goal,
+            "progress": progress_num,
+            "goal": goal_num,
             "period": period,
             "is_complete": is_complete
         }
