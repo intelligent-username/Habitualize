@@ -8,9 +8,7 @@ const CategoryManager = ({ onCategorySelect, initialSelectedCategoryId }) => {
     categories,
     selectedCategoryId,
     selectCategory,
-    showCategoryModal,
-    handleOpenCategoryModal,
-    handleCloseCategoryModal
+    modal
   } = useCategories(initialSelectedCategoryId);
 
   // Propagate category selection to the parent component
@@ -29,12 +27,12 @@ const CategoryManager = ({ onCategorySelect, initialSelectedCategoryId }) => {
       />
       <button
         className="add-category-btn"
-        onClick={handleOpenCategoryModal}
+        onClick={modal.open}
       >
         Manage Categories
       </button>
-      {showCategoryModal && (
-        <CategoryModal onClose={handleCloseCategoryModal} />
+      {modal.show && (
+        <CategoryModal onClose={modal.close} />
       )}
     </>
   );

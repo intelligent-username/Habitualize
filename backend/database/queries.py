@@ -53,7 +53,7 @@ FETCH_SEQ_DATA = "SELECT color, category_id FROM sequences WHERE id = ?"
 
 FETCH_POMODORO_DAY = "SELECT * FROM pomodoro_sessions WHERE date(time_started) = date(?)"
 
-FETCH_POMODORO_WEEK = "SELECT * FROM pomodoro_sessions WHERE date(time_started) >= date(?, '-6 days') AND date(time_started) <= date(?)"
+FETCH_POMODORO_WEEK = "SELECT * FROM pomodoro_sessions WHERE date(time_started) >= date(?) AND date(time_started) <= date(?)"
 
 FETCH_POMODORO_MON = "SELECT * FROM pomodoro_sessions WHERE strftime('%Y-%m', time_started) = ?"
 
@@ -68,6 +68,18 @@ FETCH_WEEK_STREAK = "SELECT DISTINCT strftime('%Y-%W', time_started) as w FROM p
 FETCH_QOTD = "SELECT id, quote, source FROM quotes WHERE date_used = ?"
 
 CHOOSE_QOTD = "SELECT id, quote, source FROM quotes WHERE used = 0"
+
+FETCH_ALL_SETTINGS = "SELECT setting_key, setting_value, setting_type, description FROM user_settings"
+
+FETCH_SETTING_BY_KEY = "SELECT setting_value, setting_type FROM user_settings WHERE setting_key = ?"
+
+POM_CALC = "SELECT time_started, goal_duration_minutes FROM pomodoro_sessions WHERE id = ?"
+
+POM_TIMER_CALC2 = "SELECT * FROM pomodoro_sessions WHERE date(datetime(time_started, 'localtime')) = date(?)"
+
+POM_TIMER_CALC3 = "SELECT * FROM pomodoro_sessions WHERE date(datetime(time_started, 'localtime')) >= date(?) AND date(datetime(time_started, 'localtime')) <= date(?)"
+
+FETCH_POM_LOC = "SELECT * FROM pomodoro_sessions WHERE strftime('%Y-%m', datetime(time_started, 'localtime')) = ?"
 
 # MAKE (INSERT) queries
 # -------------------------- 
@@ -85,6 +97,8 @@ MAKE_SEQUENCE = "INSERT INTO sequences (name, color, category_id, date_created) 
 MAKE_CONTRIBUTION = "INSERT INTO habit_history (habit_id, date, completed, value) VALUES (?, ?, ?, ?)"
 
 MAKE_POMODORO_SESSION = "INSERT INTO pomodoro_sessions (goal_duration_minutes, time_started, completed) VALUES (?, ?, ?)"
+
+MAKE_SETT = "INSERT INTO user_settings (setting_key, setting_value, setting_type) VALUES (?, ?, ?)"
 
 # DELETE queries
 # --------------------------
@@ -114,12 +128,22 @@ UPDATE_HABIT_HISTORY_ENTRY = "UPDATE habit_history SET completed = ?, value = ? 
 
 UPDATE_SEQ = "UPDATE sequences SET name = ?, color = ?, category_id = ? WHERE id = ?"
 
-UPDATE_HAB_CATS = "UPDATE sequences SET category_id = 1 WHERE category_id = ?" 
-    # When a category is deleted, move all habits that were WITHIN that category to the default category (1)
-    # NOTE: Might be buggy (testing this later)
+UPDATE_HAB_CATS = "UPDATE sequences SET category_id = ? WHERE category_id = ?" 
+    # When a category is deleted, move all habits that were WITHIN that category to the default category
+    # First parameter: new default category ID, Second parameter: old category ID to replace
 
 FINISH_POMODORO_SESSION = "UPDATE pomodoro_sessions SET time_finished = ?, completed = ?, time_completed = ? WHERE id = ?"
 
 MARK_QUOTES = "UPDATE quotes SET used = 0, date_used = NULL"
 
 USE_QUOTE = "UPDATE quotes SET used = 1, date_used = ? WHERE id = ?"
+
+UPDATE_SETTING = "UPDATE user_settings SET setting_value = ?, setting_type = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?"
+
+UPDATE_SEQ = """
+        UPDATE sequences
+        SET name = COALESCE(NULLIF(:name, ''), name),
+                color = COALESCE(NULLIF(:color, ''), color),
+                category_id = COALESCE(:category_id, category_id)
+        WHERE id = :sequence_id
+"""

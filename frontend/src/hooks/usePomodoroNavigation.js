@@ -1,12 +1,23 @@
 import { useState, useCallback } from 'react';
 import { addDays, subDays, format, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths, getWeek, getWeekYear, isThisYear, isToday, isThisWeek, isThisMonth, differenceInDays } from "date-fns";
 
+// Global week start day setting - will be set from App.jsx
+let weekStartDay = 0; // Default to Sunday
+
+/**
+ * Set the week start day for this module
+ * @param {number} day - Day of week (0=Sunday, 1=Monday, etc.)
+ */
+export function setWeekStartDay(day) {
+    weekStartDay = day;
+}
+
 export function usePomodoroNavigation(earliestDate, isCompact) {
   const [dayDate, setDayDate] = useState(new Date());
-  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 0 }));
+  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: weekStartDay }));
   const [monthDate, setMonthDate] = useState(startOfMonth(new Date()));
   const [graphViewType, setGraphViewType] = useState('week');
-  const [graphWeekStart, setGraphWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 0 }));
+  const [graphWeekStart, setGraphWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: weekStartDay }));
   const [graphMonthDate, setGraphMonthDate] = useState(startOfMonth(new Date()));
 
   const handlePrevDay = () => {
@@ -21,9 +32,9 @@ export function usePomodoroNavigation(earliestDate, isCompact) {
     if (!earliestDate || weekStart > earliestDate) setWeekStart(subWeeks(weekStart, 1));
   };
   const handleNextWeek = () => {
-    if (!isThisWeek(weekStart, { weekStartsOn: 0 })) setWeekStart(addWeeks(weekStart, 1));
+    if (!isThisWeek(weekStart, { weekStartsOn: weekStartDay })) setWeekStart(addWeeks(weekStart, 1));
   };
-  const handleReturnToWeek = () => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }));
+  const handleReturnToWeek = () => setWeekStart(startOfWeek(new Date(), { weekStartsOn: weekStartDay }));
 
   const handlePrevMonth = () => {
     if (!earliestDate || monthDate > earliestDate) setMonthDate(subMonths(monthDate, 1));
@@ -43,7 +54,7 @@ export function usePomodoroNavigation(earliestDate, isCompact) {
 
   const handleGraphNext = () => {
     if (graphViewType === 'week') {
-      if (!isThisWeek(graphWeekStart, { weekStartsOn: 0 })) {
+      if (!isThisWeek(graphWeekStart, { weekStartsOn: weekStartDay })) {
         setGraphWeekStart(addWeeks(graphWeekStart, 1));
       }
     } else {
@@ -55,7 +66,7 @@ export function usePomodoroNavigation(earliestDate, isCompact) {
 
   const handleGraphReturnToCurrent = () => {
     if (graphViewType === 'week') {
-      setGraphWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }));
+      setGraphWeekStart(startOfWeek(new Date(), { weekStartsOn: weekStartDay }));
     } else {
       setGraphMonthDate(startOfMonth(new Date()));
     }
@@ -63,7 +74,7 @@ export function usePomodoroNavigation(earliestDate, isCompact) {
 
   const getGraphTitle = useCallback(() => {
     if (graphViewType === 'week') {
-      if (isThisWeek(graphWeekStart, { weekStartsOn: 0 })) return "This Week's Progress";
+      if (isThisWeek(graphWeekStart, { weekStartsOn: weekStartDay })) return "This Week's Progress";
       return `Week of ${format(graphWeekStart, 'MMM do')}`;
     } else {
       if (isThisMonth(graphMonthDate)) return "This Month's Progress";
@@ -81,7 +92,7 @@ export function usePomodoroNavigation(earliestDate, isCompact) {
   }, [dayDate, isCompact]);
 
   const getWeekLabel = useCallback(() => {
-    const options = { weekStartsOn: 0 };
+    const options = { weekStartsOn: weekStartDay };
     if (isThisWeek(weekStart, options)) return isCompact ? "This Week" : "This Week's Stats";
     const lastWeekStart = startOfWeek(subWeeks(new Date(), 1), options);
     if (weekStart.getTime() === lastWeekStart.getTime()) return isCompact ? "Last Week" : "Last Week's Stats";

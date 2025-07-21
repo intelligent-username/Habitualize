@@ -9,6 +9,17 @@ import { format, startOfWeek, parseISO, addDays, subDays } from 'date-fns';
 const DAYS_IN_WEEK = 7;
 const MS_TO_SECONDS = 1000;
 
+// Global week start day setting - will be set by importing modules
+let weekStartDay = 0; // Default to Sunday
+
+/**
+ * Set the week start day for this module
+ * @param {number} day - Day of week (0=Sunday, 1=Monday, etc.)
+ */
+export function setWeekStartDay(day) {
+    weekStartDay = day;
+}
+
 /**
  * Parse ISO date string to local Date object
  * @param {string} isoString - ISO date string (YYYY-MM-DD)
@@ -84,7 +95,7 @@ export function isSameDay(a, b) {
  * @returns {Date} - Week start date
  */
 export function getCurrentWeekStart(selectedDate) {
-    return startOfWeek(parseISO(selectedDate), { weekStartsOn: 0 });
+    return startOfWeek(parseISO(selectedDate), { weekStartsOn: weekStartDay });
 }
 
 /**

@@ -2,11 +2,10 @@
 // Very, very useful but don't waste too much time implementing too many features (go work on other projects atp)
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
 
   const toggleSidebar = () => {
@@ -17,41 +16,65 @@ const Sidebar = () => {
     setIsOpen(false);
   };
 
-  // Handle swipe gesture
+  // Handle swipe gesture (touch and mouse for mobile and PC)
   useEffect(() => {
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
 
+    // Touch events (mobile)
     const handleTouchStart = (e) => {
-      if (e.touches[0].clientX < 50) { // Only start swipe from left edge
+      if (e.touches[0].clientX < 50) {
         startX = e.touches[0].clientX;
         isDragging = true;
       }
     };
-
     const handleTouchMove = (e) => {
       if (!isDragging) return;
       currentX = e.touches[0].clientX;
-      
       if (currentX - startX > 50 && !isOpen) {
         setIsOpen(true);
         isDragging = false;
       }
     };
-
     const handleTouchEnd = () => {
+      isDragging = false;
+    };
+
+    // Mouse events (PC)
+    const handleMouseDown = (e) => {
+      if (e.button !== 0) return; // Only left click
+      if (e.clientX < 50) {
+        startX = e.clientX;
+        isDragging = true;
+      }
+    };
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      currentX = e.clientX;
+      if (currentX - startX > 50 && !isOpen) {
+        setIsOpen(true);
+        isDragging = false;
+      }
+    };
+    const handleMouseUp = () => {
       isDragging = false;
     };
 
     document.addEventListener('touchstart', handleTouchStart);
     document.addEventListener('touchmove', handleTouchMove);
     document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isOpen]);
 
@@ -110,8 +133,15 @@ const Sidebar = () => {
     }
   ];
 
-  const handleNavigation = (path) => {
-    navigate(path);
+
+  // Only close sidebar on normal click (not new tab)
+  const handleNavClick = (e) => {
+    if (
+      e.ctrlKey || e.metaKey || e.button === 1 || e.shiftKey || e.altKey
+    ) {
+      // Let browser handle new tab/window
+      return;
+    }
     setIsOpen(false);
   };
 
@@ -147,21 +177,18 @@ const Sidebar = () => {
         {/* Navigation */}
         <nav className="sidebar-nav">
           {navigationItems.map((item, index) => (
-            <a
+            <Link
               key={index}
-              href={item.path}
+              to={item.path}
               className={`sidebar-nav-item${location.pathname === item.path ? ' active' : ''}`}
-              onClick={e => {
-                e.preventDefault();
-                handleNavigation(item.path);
-              }}
+              onClick={handleNavClick}
             >
               <span className="sidebar-nav-icon">{item.icon}</span>
               <span className="sidebar-nav-text">{item.text}</span>
               {item.badge && (
                 <span className="sidebar-nav-badge">{item.badge}</span>
               )}
-            </a>
+            </Link>
           ))}
         </nav>
 

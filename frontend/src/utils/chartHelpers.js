@@ -6,9 +6,19 @@
 import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from 'date-fns';
 
 // Constants
-const WEEK_START_DAY = 0; // Sunday
 const MIN_DAYS_FOR_MONTHLY = 10;
 const MS_TO_SECONDS = 1000;
+
+// Global week start day setting - will be set by importing modules
+let weekStartDay = 0; // Default to Sunday
+
+/**
+ * Set the week start day for this module
+ * @param {number} day - Day of week (0=Sunday, 1=Monday, etc.)
+ */
+export function setWeekStartDay(day) {
+    weekStartDay = day;
+}
 
 /**
  * Processes raw weekly pomodoro stats for chart display
@@ -17,7 +27,7 @@ const MS_TO_SECONDS = 1000;
  * @returns {Array} Array of objects with date, label, and timeWorked
  */
 export function processWeeklyData(pomodoroStats, weekStart) {
-  const weekEnd = endOfWeek(weekStart, { weekStartsOn: WEEK_START_DAY });
+  const weekEnd = endOfWeek(weekStart, { weekStartsOn: weekStartDay });
   const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const timeByDate = buildTimeByDateMap(pomodoroStats);
@@ -61,8 +71,10 @@ function buildTimeByDateMap(pomodoroStats) {
   
   pomodoroStats?.forEach(session => {
     if (session.time_completed) { // Include partial sessions
-      const date = format(new Date(session.time_started), 'yyyy-MM-dd');
-      timeByDate[date] = (timeByDate[date] || 0) + parseFloat(session.time_completed);
+      // Always convert UTC to local date string for grouping
+      const localDate = new Date(session.time_started);
+      const dateString = localDate.getFullYear() + '-' + String(localDate.getMonth() + 1).padStart(2, '0') + '-' + String(localDate.getDate()).padStart(2, '0');
+      timeByDate[dateString] = (timeByDate[dateString] || 0) + parseFloat(session.time_completed);
     }
   });
   

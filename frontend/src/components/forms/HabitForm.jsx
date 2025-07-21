@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { isMobile } from "../../utils/constants";
 import { useCategories } from "../../hooks/useCategories.js";
-import { useSequences } from "../../hooks/useSequences.js";
+import { useSequences, useSequence } from "../../hooks/useSequences.js";
 import { useHabits } from "../../hooks/useHabits.js";
 import { useHabitFormSubmission } from "../../hooks/useHabitFormSubmission.js";
 import { ColorPicker } from "../ui";
@@ -11,34 +11,48 @@ import { SequenceForm } from "./SequenceForm.jsx";
 import { CumulativeForm } from "./CumulativeForm.jsx";
 import IconPicker from "../ui/IconPicker";
 import TemplateForm from "./template.jsx";
+import { useSettings } from "../../hooks/useSettings.js";
 
 // Custom hook for form initialization
-function useHabitFormInitialization({ editingHabit, editingSequenceId, sequences, setHabitKind, setNewHabit, setColor, setIcon, setCategoryId, setSequenceCount, setSequenceHabits, setSequenceTimers, setCumulativeGoal, setCumulativePeriod, setType, setTargetValue, setTimerHours, setTimerMinutes, setTimerSeconds, formInitializedRef }) {
-    const editingSequence = editingSequenceId 
-        ? sequences.find(seq => seq.id === editingSequenceId) 
-        : null;
+function useHabitFormInitialization({ editingHabit, editingSequenceId, editingSequence, setHabitKind, setNewHabit, setColor, setIcon, setCategoryId, setSequenceCount, setSequenceHabits, setSequenceTimers, setCumulativeGoal, setCumulativePeriod, setType, setTargetValue, setTimerHours, setTimerMinutes, setTimerSeconds, formInitializedRef, defaultHabitType, defaultHabitColor, defaultHabitIcon, defaultCategoryId }) {
     useEffect(() => {
-        if (!editingSequenceId && !editingHabit) {
-            formInitializedRef.current = false;
-            return;
-        }
+        // Don't initialize if already done
         if (formInitializedRef.current) {
             return;
         }
+
+        if (!editingSequenceId && !editingHabit) {
+            // Initialize with default values for new forms
+            const currentDefaultType = defaultHabitType || "binary";
+            setSequenceHabits([
+                { name: "", type: currentDefaultType, target_value: "", isSubsequence: false, subHabits: [] },
+                { name: "", type: currentDefaultType, target_value: "", isSubsequence: false, subHabits: [] }
+            ]);
+            setSequenceTimers([
+                { h: 0, m: 0, s: 0 },
+                { h: 0, m: 0, s: 0 }
+            ]);
+            formInitializedRef.current = true;
+            return;
+        }
+
         if (editingSequence) {
             setHabitKind("sequence");
             setNewHabit(editingSequence.name);
             setColor(editingSequence.color);
             setCategoryId(editingSequence.category_id);
             setSequenceCount(editingSequence.steps.length);
-            setSequenceHabits(editingSequence.steps.map(h => ({
+            
+            const habitData = editingSequence.steps.map(h => ({
                 name: h.name,
                 type: h.type,
                 target_value: h.target_value || "",
                 isSubsequence: false,
                 subHabits: []
-            })));
-            setSequenceTimers(editingSequence.steps.map(h => {
+            }));
+            setSequenceHabits(habitData);
+            
+            const timerData = editingSequence.steps.map(h => {
                 if (h.type === "timer") {
                     const total = Number(h.target_value) || 0;
                     return {
@@ -48,25 +62,28 @@ function useHabitFormInitialization({ editingHabit, editingSequenceId, sequences
                     };
                 }
                 return { h: 0, m: 0, s: 0 };
-            }));
+            });
+            setSequenceTimers(timerData);
             formInitializedRef.current = true;
         } else if (editingHabit) {
             if (editingHabit.cumulative) {
                 setHabitKind("cumulative");
                 setNewHabit(editingHabit.name);
-                setColor(editingHabit.color || "gray");
-                setIcon(editingHabit.icon || "default.svg");
-                setCategoryId(editingHabit.category_id || 1);
+                setColor(editingHabit.color || defaultHabitColor || "gray");
+                setIcon(editingHabit.icon || defaultHabitIcon || "default.svg");
+                // For editing habits, use habit's category, fallback to default only if needed
+                setCategoryId(editingHabit.category_id || defaultCategoryId || 1);
                 setCumulativeGoal(editingHabit.cumulative_goal || "");
                 setCumulativePeriod(editingHabit.cumulative_period || "monthly");
             } else {
                 setHabitKind("normal");
                 setNewHabit(editingHabit.name);
-                setType(editingHabit.type || "binary");
+                setType(editingHabit.type || defaultHabitType || "binary");
                 setTargetValue(editingHabit.target_value || "");
-                setColor(editingHabit.color || "gray");
-                setIcon(editingHabit.icon || "default.svg");
-                setCategoryId(editingHabit.category_id || 1);
+                setColor(editingHabit.color || defaultHabitColor || "gray");
+                setIcon(editingHabit.icon || defaultHabitIcon || "default.svg");
+                // For editing habits, use habit's category, fallback to default only if needed
+                setCategoryId(editingHabit.category_id || defaultCategoryId || 1);
                 if (editingHabit.type === "timer" && editingHabit.target_value) {
                     const total = Number(editingHabit.target_value) || 0;
                     if (isMobile()) {
@@ -86,11 +103,11 @@ function useHabitFormInitialization({ editingHabit, editingSequenceId, sequences
         } else {
             setHabitKind("normal");
         }
-    }, [editingSequenceId, editingHabit, editingSequence]);
+    }, [editingSequenceId, editingHabit, editingSequence?.id, editingSequence?.steps?.length]);
 }
 
 // Custom hook for sequence/subsequence handlers
-function useSequenceHandlers({ setSequenceHabits, setSequenceTimers, setSubsequenceTimers }) {
+function useSequenceHandlers({ setSequenceHabits, setSequenceTimers }) {
     const handleSequenceHabitChange = (idx, field, value) => {
         setSequenceHabits(hs => {
             const copy = [...hs];
@@ -105,39 +122,9 @@ function useSequenceHandlers({ setSequenceHabits, setSequenceTimers, setSubseque
             });
         }
     };
-    const handleAddSubsequence = (idx) => {
-        setSequenceHabits(hs => {
-            const copy = [...hs];
-            copy[idx].isSubsequence = true;
-            copy[idx].subHabits = [
-                { name: "", type: "binary", target_value: "" },
-                { name: "", type: "binary", target_value: "" }
-            ];
-            return copy;
-        });
-        setSubsequenceTimers(st => {
-            const arr = [...st];
-            arr[idx] = [{ h: 0, m: 0, s: 0 }, { h: 0, m: 0, s: 0 }];
-            return arr;
-        });
-    };
-    const handleSubsequenceHabitChange = (parentIdx, subIdx, field, value) => {
-        setSequenceHabits(hs => {
-            const copy = [...hs];
-            copy[parentIdx].subHabits[subIdx][field] = value;
-            return copy;
-        });
-        if (field === "type" && value === "timer") {
-            setSubsequenceTimers(st => {
-                const arr = [...st];
-                arr[parentIdx] = arr[parentIdx] || [{ h: 0, m: 0, s: 0 }, { h: 0, m: 0, s: 0 }];
-                arr[parentIdx][subIdx] = arr[parentIdx][subIdx] || { h: 0, m: 0, s: 0 };
-                return arr;
-            });
-        }
-    };
-    return { handleSequenceHabitChange, handleAddSubsequence, handleSubsequenceHabitChange };
+    return { handleSequenceHabitChange };
 }
+
 
 export const HabitForm = ({
     editingHabit,
@@ -148,22 +135,33 @@ export const HabitForm = ({
 }) => {
     // Use hooks directly instead of receiving data as props
     const { categories } = useCategories();
-    const { sequences, createSingleHabitSequence, createMultiStepSequence, updateSequence } = useSequences(selectedDate);
+    const { createSingleHabitSequence, createMultiStepSequence, updateSequence } = useSequences(selectedDate);
     const { updateHabit } = useHabits();
 
-    // Form state
+    // Fetch specific sequence data when editing
+    const { sequence: editingSequenceData, sequenceLoading } = useSequence(editingSequenceId);
+    
+    // Get user settings
+    const { 
+        settings, 
+        isLoading: settingsLoading, 
+        defaultHabitColor, 
+        defaultHabitType, 
+        defaultHabitIcon, 
+        defaultCategoryId, 
+        defaultSequenceCount 
+    } = useSettings();
+
+    // Form state - Wait for settings before initializing
     const [newHabit, setNewHabit] = useState("");
-    const [color, setColor] = useState("gray");
-    const [icon, setIcon] = useState("default.svg");
+    const [color, setColor] = useState("gray"); // Will be updated when settings load
+    const [icon, setIcon] = useState("default.svg"); // Will be updated when settings load
     const [categoryId, setCategoryId] = useState(initialCategoryId);
-    const [type, setType] = useState("binary");
+    const [type, setType] = useState("binary"); // Will be updated when settings load
     const [targetValue, setTargetValue] = useState("");
     const [habitKind, setHabitKind] = useState("normal");
-    const [sequenceCount, setSequenceCount] = useState(2);
-    const [sequenceHabits, setSequenceHabits] = useState([
-        { name: "", type: "binary", target_value: "", isSubsequence: false, subHabits: [] },
-        { name: "", type: "binary", target_value: "", isSubsequence: false, subHabits: [] }
-    ]);
+    const [sequenceCount, setSequenceCount] = useState(2); // Will be updated when settings load
+    const [sequenceHabits, setSequenceHabits] = useState([]);
     const [cumulativePeriod, setCumulativePeriod] = useState("monthly");
     const [cumulativeGoal, setCumulativeGoal] = useState("");
     const [showColorGrid, setShowColorGrid] = useState(false);
@@ -174,22 +172,33 @@ export const HabitForm = ({
     const [timerMinutes, setTimerMinutes] = useState(0);
     const [timerSeconds, setTimerSeconds] = useState(0);
     // Timer picker state for sequence habits (array of {h, m, s})
-    const [sequenceTimers, setSequenceTimers] = useState([
-        { h: 0, m: 0, s: 0 },
-        { h: 0, m: 0, s: 0 }
-    ]);
-    // For subsequence timers
-    const [subsequenceTimers, setSubsequenceTimers] = useState([
-        [{ h: 0, m: 0, s: 0 }, { h: 0, m: 0, s: 0 }],
-        [{ h: 0, m: 0, s: 0 }, { h: 0, m: 0, s: 0 }]
-    ]);
+    const [sequenceTimers, setSequenceTimers] = useState([]);
     const [cumulativeFormError, setCumulativeFormError] = useState("");
+
+    // Update form state when settings load
+    useEffect(() => {
+        if (!settingsLoading && settings) {
+            // Only update if we're not editing an existing habit/sequence
+            if (!editingHabit && !editingSequenceId) {
+                setColor(defaultHabitColor || "gray");
+                setIcon(defaultHabitIcon || "default.svg");
+                setType(defaultHabitType || "binary");
+                setSequenceCount(defaultSequenceCount || 2);
+                // Don't override categoryId - keep the current/selected category (initialCategoryId)
+                // defaultCategoryId is only for fallback when categories are deleted
+            }
+        }
+    }, [settingsLoading, settings, defaultHabitColor, defaultHabitIcon, defaultHabitType, defaultSequenceCount, editingHabit, editingSequenceId]);
 
     // Initialization
     useHabitFormInitialization({
         editingHabit,
         editingSequenceId,
-        sequences,
+        editingSequence: editingSequenceData,
+        defaultHabitType,
+        defaultHabitColor,
+        defaultHabitIcon,
+        defaultCategoryId,
         setHabitKind,
         setNewHabit,
         setColor,
@@ -208,15 +217,21 @@ export const HabitForm = ({
         formInitializedRef
     });
 
-    // Sequence/subsequence handlers
-    const { handleSequenceHabitChange, handleAddSubsequence, handleSubsequenceHabitChange } = useSequenceHandlers({ setSequenceHabits, setSequenceTimers, setSubsequenceTimers });
+    // Sequence handlers
+    const { handleSequenceHabitChange } = useSequenceHandlers({ setSequenceHabits, setSequenceTimers });
 
-    // Adjust sequence habit count
+    // Adjust sequence habit count (only after form is initialized)
     useEffect(() => {
+        // Don't adjust arrays during form initialization 
+        if (!formInitializedRef.current) {
+            return;
+        }
+        
         setSequenceHabits(hs => {
             let arr = [...hs];
             if (arr.length < sequenceCount) {
-                while (arr.length < sequenceCount) arr.push({ name: "", type: "binary", target_value: "", isSubsequence: false, subHabits: [] });
+                const currentDefaultType = defaultHabitType || "binary";
+                while (arr.length < sequenceCount) arr.push({ name: "", type: currentDefaultType, target_value: "", isSubsequence: false, subHabits: [] });
             } else if (arr.length > sequenceCount) {
                 arr = arr.slice(0, sequenceCount);
             }
@@ -231,16 +246,7 @@ export const HabitForm = ({
             }
             return arr;
         });
-        setSubsequenceTimers(st => {
-            let arr = [...st];
-            if (arr.length < sequenceCount) {
-                while (arr.length < sequenceCount) arr.push([{ h: 0, m: 0, s: 0 }, { h: 0, m: 0, s: 0 }]);
-            } else if (arr.length > sequenceCount) {
-                arr = arr.slice(0, sequenceCount);
-            }
-            return arr;
-        });
-    }, [sequenceCount]);
+    }, [sequenceCount, defaultHabitType]);
 
     // Handle category change
     const handleCategoryChange = (catId) => {
@@ -258,7 +264,7 @@ export const HabitForm = ({
     const { handleSubmit } = useHabitFormSubmission({
         editingHabit,
         editingSequenceId,
-        editingSequence: sequences.find(seq => seq.id === editingSequenceId),
+        editingSequence: editingSequenceData,
         createSingleHabitSequence,
         createMultiStepSequence,
         updateSequence,
@@ -284,7 +290,7 @@ export const HabitForm = ({
 
     const fields = [
         {
-            label: "Habit name",
+            label: "Habit Name",
             type: "text",
             value: newHabit,
             onChange: (e) => setNewHabit(e.target.value),
@@ -299,35 +305,40 @@ export const HabitForm = ({
             value: habitKind,
             onChange: e => setHabitKind(e.target.value),
             options: [
-                { value: "normal", label: "Normal (one-off, daily)" },
-                { value: "sequence", label: "Sequence (routine/group)" },
-                { value: "cumulative", label: "Cumulative (weekly/monthly/yearly goal)" }
+                { value: "normal", label: "Normal" },
+                { value: "cumulative", label: "Cumulative" },
+                { value: "sequence", label: "Sequence" }
             ],
-            marginTop: "1rem"
+            marginTop: "1rem",
+            marginBottom: "1rem"
         }
     ];
+    if (sequenceLoading || settingsLoading) {
+        return <div>Loading...</div>;
+    }
+
     return (
-        <form className="add-habit" onSubmit={e => {
-            e.preventDefault();
-            handleValidatedSubmit({
-                habitKind,
-                newHabit,
-                color,
-                categoryId,
-                type,
-                targetValue,
-                timerHours,
-                timerMinutes,
-                timerSeconds,
-                sequenceHabits,
-                sequenceTimers,
-                subsequenceTimers,
-                cumulativePeriod,
-                cumulativeGoal,
-                icon
-            });
-        }}>
-            <TemplateForm fields={fields}>
+        <div className="add-habit">
+            <form onSubmit={e => {
+                e.preventDefault();
+                handleValidatedSubmit({
+                    habitKind,
+                    newHabit,
+                    color,
+                    categoryId,
+                    type,
+                    targetValue,
+                    timerHours,
+                    timerMinutes,
+                    timerSeconds,
+                    sequenceHabits,
+                    sequenceTimers,
+                    cumulativePeriod,
+                    cumulativeGoal,
+                    icon
+                });
+            }}>
+                <TemplateForm fields={fields}>
                 {/* Icon picker */}
                 <label className="habit-form-label" style={{ marginTop: "1rem" }}>Icon</label>
                 <IconPicker selectedIcon={icon} onSelect={setIcon} />
@@ -368,10 +379,6 @@ export const HabitForm = ({
                         handleSequenceHabitChange={handleSequenceHabitChange}
                         sequenceTimers={sequenceTimers}
                         setSequenceTimers={setSequenceTimers}
-                        handleAddSubsequence={handleAddSubsequence}
-                        handleSubsequenceHabitChange={handleSubsequenceHabitChange}
-                        subsequenceTimers={subsequenceTimers}
-                        setSubsequenceTimers={setSubsequenceTimers}
                     />
                 )}
                 {/* Cumulative form */}
@@ -389,5 +396,6 @@ export const HabitForm = ({
                 </button>
             </TemplateForm>
         </form>
+        </div>
     );
 };

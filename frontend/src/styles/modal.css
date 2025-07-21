@@ -10,11 +10,12 @@
 }
 
 .modal-content {
-  background: var(--bg-secondary);
+  background: var(--modal-bg);
   border-radius: 10px;
   padding: 2rem;
   min-width: 320px;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.2);
+  box-shadow: var(--shadow-strong);
+  border: 1px solid var(--border);
   position: relative;
   max-height: 90vh;
   overflow-y: auto;

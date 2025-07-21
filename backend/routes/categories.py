@@ -7,6 +7,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from imports import *
+from services.settings_service import get_default_category_id
 
 categories_bp = Blueprint('categories', __name__, url_prefix='/categories')
 
@@ -37,9 +38,10 @@ def rename_category(category_id):
 
 @categories_bp.route('/<int:category_id>', methods=['DELETE'])
 def delete_category(category_id):
-    if category_id == 1:
+    default_cat_id = get_default_category_id()
+    if category_id == default_cat_id:
         return jsonify({"error": "Cannot delete default category"}), 400
 
-    run_query(UPDATE_HAB_CATS, params=(category_id,))
+    run_query(UPDATE_HAB_CATS, params=(default_cat_id, category_id))
     run_query(DEL_CAT, params=(category_id,))
     return jsonify({"message": "Category deleted"}), 200

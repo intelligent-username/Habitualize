@@ -262,7 +262,6 @@ export const useHabitFormSubmission = ({
             categoryId, 
             sequenceHabits, 
             sequenceTimers, 
-            subsequenceTimers, 
             icon 
         } = formData;
 
@@ -278,23 +277,6 @@ export const useHabitFormSubmission = ({
                 );
             }
 
-            // Handle subsequences (nested habits)
-            if (habit.isSubsequence && habit.subHabits) {
-                processedHabit.subHabits = habit.subHabits.map((subHabit, subIndex) => {
-                    const processedSubHabit = { ...subHabit, icon: subHabit.icon || icon };
-
-                    if (subHabit.type === "timer") {
-                        const subTimerConfig = subsequenceTimers[index][subIndex];
-                        processedSubHabit.target_value = calculateTimerValue(
-                            subTimerConfig.h, 
-                            subTimerConfig.m, 
-                            subTimerConfig.s
-                        );
-                    }
-
-                    return processedSubHabit;
-                });
-            }
 
             return processedHabit;
         });

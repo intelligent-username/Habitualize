@@ -9,11 +9,11 @@ body {
 }
 
 .qotd-quote-box {
-  background: rgba(255,255,255,0.85);
+  background: var(--card-bg);
   border-radius: 1.5rem;
   padding: 3rem 2.5rem 2.5rem 2.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);
+  box-shadow: var(--shadow-medium);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -26,7 +26,7 @@ body {
 .qotd-quote {
   font-size: 2rem;
   font-style: italic;
-  color: #222;
+  color: var(--text-primary);
   margin-bottom: 2.2rem;
   font-family: 'Merriweather', Georgia, serif;
   line-height: 1.5;
@@ -37,17 +37,17 @@ body {
 .qotd-quote:before {
   content: '\201C';
   font-size: 3.5rem;
-  color: var(--accent, #ba4949);
+  color: var(--accent);
   position: absolute;
   left: -1.2rem;
   top: -1.5rem;
-  opacity: 0.18;
+  opacity: 0.3;
   font-family: serif;
 }
 
 .qotd-author {
   font-size: 1.3rem;
-  color: #ba4949;
+  color: var(--accent);
   text-align: right;
   width: 100%;
   font-family: 'Dancing Script', cursive;

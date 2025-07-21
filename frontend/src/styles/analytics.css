@@ -1,9 +1,9 @@
 .analytics-section {
-  background: linear-gradient(135deg, rgba(30,30,30,0.98) 80%, rgba(0,188,212,0.10) 100%);
+  background: var(--card-bg);
   border-radius: 1.2rem;
   padding: 2.5rem 2rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 2px 12px 0 rgba(0,188,212,0.10), 0 1px 4px 0 rgba(0,0,0,0.10);
+  box-shadow: var(--shadow-medium);
   border: 1.5px solid var(--border);
   display: flex;
   flex-direction: column;

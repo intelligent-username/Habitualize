@@ -35,30 +35,6 @@ The development server will start at [http://localhost:3000](http://localhost:30
 - `npm run format` — Format code with Prettier
 - `npm run clean` — Remove build output and Vite cache
 
-## Project Structure
-
-```md
-src/
-├── components/           # React components organized by feature
-│   ├── calendar/        # Date navigation (WeekBar, MonthView)
-│   ├── categories/      # Category management components
-│   ├── forms/           # Habit creation and editing forms
-│   ├── habits/          # Habit display and interaction components
-│   └── ui/              # Reusable UI components (Modal, ColorPicker, etc.)
-├── hooks/               # Custom React hooks for state management
-│   ├── useCategories.js # Category data and operations
-│   ├── useHabits.js     # Habit data and operations
-│   ├── useSequences.js  # Sequence data and operations
-│   └── useHabitControls.js # Habit interaction logic
-├── services/
-│   └── api.js           # API service layer for backend communication
-├── utils/
-│   ├── constants.js     # App-wide constants and configuration
-│   └── dateHelpers.js   # Date formatting and manipulation utilities
-├── App.jsx              # Main application component
-└── index.jsx            # Application entry point with providers
-```
-
 ### Configuration Files
 
 - `vite.config.js` — Vite configuration (port 3000, auto-open browser)

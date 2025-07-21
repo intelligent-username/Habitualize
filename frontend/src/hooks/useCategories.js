@@ -9,9 +9,9 @@ import apiService from '../services/api';
 
 const DEFAULT_CATEGORY_ID = 1;
 
-export const useCategories = () => {
+export const useCategories = (initialSelectedCategoryId) => {
     const queryClient = useQueryClient();
-    const [selectedCategoryId, setSelectedCategoryId] = useState(DEFAULT_CATEGORY_ID);
+    const [selectedCategoryId, setSelectedCategoryId] = useState(initialSelectedCategoryId || DEFAULT_CATEGORY_ID);
     // Category modal state
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
@@ -163,6 +163,29 @@ export const useCategories = () => {
         reset: resetModalState
     };
 
+    // --- Modal handlers for CategoryModal compatibility ---
+    const handleAddCategory = async () => {
+        if (!newCategoryName.trim()) return;
+        await createCategory(newCategoryName);
+        setNewCategoryName("");
+    };
+    const handleDeleteCategory = async (id) => {
+        if (id === DEFAULT_CATEGORY_ID) return;
+        const confirmed = window.confirm("Are you sure you want to delete this category?");
+        if (!confirmed) return;
+        await deleteCategory(id);
+    };
+    const handleStartRenameCategory = (id, name) => {
+        setRenameCategoryId(id);
+        setRenameCategoryName(name);
+    };
+    const handleRenameCategory = async () => {
+        if (!renameCategoryName.trim() || !renameCategoryId) return;
+        await updateCategory({ id: renameCategoryId, name: renameCategoryName });
+        setRenameCategoryId(null);
+        setRenameCategoryName("");
+    };
+
     return {
         categories: stableCategories,
         selectedCategoryId,
@@ -173,6 +196,17 @@ export const useCategories = () => {
         updateCategory,
         deleteCategory,
         selectCategory,
-        modal
+        modal,
+        // Expose handlers for CategoryModal
+        newCategoryName,
+        setNewCategoryName,
+        renameCategoryId,
+        renameCategoryName,
+        setRenameCategoryId,
+        setRenameCategoryName,
+        handleAddCategory,
+        handleDeleteCategory,
+        handleStartRenameCategory,
+        handleRenameCategory
     };
 };

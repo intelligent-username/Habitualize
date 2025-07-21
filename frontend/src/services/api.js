@@ -36,10 +36,10 @@ class ApiService {
     
     // Category Operations Section
     async getCategories() {
-        console.log('[API] getCategories called, making request to /categories');
+        // console.log('[API] getCategories called, making request to /categories');
         try {
             const result = await this.request('/categories');
-            console.log('[API] getCategories success, result:', result);
+            // console.log('[API] getCategories success, result:', result);
             return result;
         } catch (error) {
             console.error('[API] getCategories failed:', error);
@@ -167,6 +167,94 @@ class ApiService {
     // QotD
     async getQuoteOfTheDay() {
         return this.request('/api/quote-of-the-day');
+    }
+
+    // Settings Operations Section
+    async getSettings() {
+        // console.log('[API] getSettings called, making request to /settings');
+        try {
+            const result = await this.request('/settings');
+            // console.log('[API] getSettings success, result:', result);
+            return result;
+        } catch (error) {
+            console.error('[API] getSettings failed:', error);
+            throw error;
+        }
+    }
+
+    async updateSettings(settings) {
+        // console.log('[API] updateSettings called with:', settings);
+        try {
+            const result = await this.request('/settings', {
+                method: 'POST',
+                body: JSON.stringify(settings),
+            });
+            // console.log('[API] updateSettings success, result:', result);
+            return result;
+        } catch (error) {
+            console.error('[API] updateSettings failed:', error);
+            throw error;
+        }
+    }
+
+    // Data Management Operations Section
+    async exportData() {
+        // console.log('[API] exportData called');
+        try {
+            const response = await fetch(`${API_BASE_URL}/data/export`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            // Handle file download
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            
+            // Get filename from response headers or use default
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = 'habitualize_export.json';
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            // console.log('[API] exportData success');
+            return { success: true, filename };
+        } catch (error) {
+            console.error('[API] exportData failed:', error);
+            throw error;
+        }
+    }
+
+    async clearData() {
+        // console.log('[API] clearData called');
+        try {
+            const result = await this.request('/data/clear', {
+                method: 'POST',
+            });
+            // console.log('[API] clearData success, result:', result);
+            return result;
+        } catch (error) {
+            console.error('[API] clearData failed:', error);
+            throw error;
+        }
     }
 }
 

@@ -10,7 +10,7 @@
 @import './styles/icons.css';
 
 
-/* --- GLOBAL/UNIVERSAL STYLES (keep here) --- */
+/* --- ABSOLUTE UNIVERSAL STYLES --- */
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;

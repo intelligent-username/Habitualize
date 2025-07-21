@@ -88,15 +88,15 @@ The application uses SQLite with the following table structure:
                           │ value            │
                           └──────────────────┘
 
-    ┌──────────────────────┐      ┌───────────┐
-    │  pomodoro_sessions   │      │  quotes   │
-    ├──────────────────────┤      ├───────────┤
-    │ id                   │      │ id        │
-    │ goal_duration        │      │ quote     │
-    │ time_started         │      │ source    │
-    │ time_finished        │      │ used      │
-    | completed            │      | date_used |
-    | time_completed       |      └───────────┘
+    ┌──────────────────────┐      ┌───────────┐                ┌──────────────────┐
+    │  pomodoro_sessions   │      │  quotes   │                |   user_settings  |
+    ├──────────────────────┤      ├───────────┤                ├──────────────────┤
+    │ id                   │      │ id        │                |    id            |
+    │ goal_duration        │      │ quote     │                |    setting_key   |
+    │ time_started         │      │ source    │                |    setting_type  |
+    │ time_finished        │      │ used      │                |    created_at    |
+    | completed            │      | date_used |                |    updated_at    |
+    | time_completed       |      └───────────┘                └──────────────────┘
     └──────────────────────┘
 ```
 

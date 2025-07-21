@@ -10,6 +10,7 @@ const PomodoroPage = () => {
   const [isCompact, setIsCompact] = useState(window.innerWidth < 700);
   const timerSectionRef = useRef(null);
   const [timerDimensions, setTimerDimensions] = useState({ width: 600, height: 400 });
+  const [timerPop, setTimerPop] = useState(false);
 
   const {
     earliestDate,
@@ -58,14 +59,16 @@ const PomodoroPage = () => {
         setTimerDimensions({ width, height });
       }
     };
+    
+    // Always update dimensions, even if timer is not ready yet
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
-  }, []);
+  }, [timer]); // Add timer as dependency to update when timer becomes available
 
   const outlineRef = useRef(null);
   useEffect(() => {
-    if (!outlineRef.current || !timerDimensions.width || !timerDimensions.height) return;
+    if (!outlineRef.current || !timerDimensions.width || !timerDimensions.height || timer === null) return;
 
     const totalDuration =
       mode === "pomodoro" ? workDuration * 60 :
@@ -89,14 +92,32 @@ const PomodoroPage = () => {
     }
   }, [timer, mode, workDuration, shortBreak, longBreak, timerDimensions]);
 
+  useEffect(() => {
+    if (isRunning || (!isRunning && !isPaused && timer !== null)) {
+      setTimerPop(true);
+      const timeout = setTimeout(() => setTimerPop(false), 350);
+      return () => clearTimeout(timeout);
+    }
+  }, [isRunning, timer, isPaused]);
 
   return (
+    <>
+      <title>Pomodoro Timer</title>
+      
+
     <div className="page-container">
       <audio ref={audioRef} src="/ding.mp3" preload="auto" />
       {celebrate && (
         <div className="celebration">
-          {[...Array(15)].map((_, i) => (
-            <div key={i} className="particle" style={{ '--x': `${Math.random() * 400 - 200}px`, '--y': `${Math.random() * 400 - 200}px` }} />
+          {[...Array(18)].map((_, i) => (
+            <div
+              key={i}
+              className="particle"
+              style={{
+                '--x': `${Math.random() * 320 - 160}px`,
+                '--y': `${Math.random() * 320 - 160}px`
+              }}
+            />
           ))}
         </div>
       )}
@@ -116,22 +137,29 @@ const PomodoroPage = () => {
           ))}
         </div>
       </div>
-      {timer !== null && timerDimensions.width > 0 && timerDimensions.height > 0 && (
+      {timer !== null && (
         <div className="pomo-timer-section" ref={timerSectionRef}>
-          <svg className="timer-outline-svg" viewBox={`0 0 ${timerDimensions.width} ${timerDimensions.height}`}>
-            <path
-              className="timer-progress-background"
-              d={`M 2.5,2.5 L ${timerDimensions.width - 2.5},2.5 L ${timerDimensions.width - 2.5},${timerDimensions.height - 2.5} L 2.5,${timerDimensions.height - 2.5} Z`}
-            />
-            <path
-              ref={outlineRef}
-              className="timer-progress-bar"
-              style={{ color: MODES.find((m) => m.key === mode).color }}
-              d={`M 2.5,2.5 L ${timerDimensions.width - 2.5},2.5 L ${timerDimensions.width - 2.5},${timerDimensions.height - 2.5} L 2.5,${timerDimensions.height - 2.5} Z`}
-            />
-          </svg>
+          {timerDimensions.width > 0 && timerDimensions.height > 0 && (
+            <svg className="timer-outline-svg" viewBox={`0 0 ${timerDimensions.width} ${timerDimensions.height}`}>
+              <path
+                className="timer-progress-background"
+                d={`M 2.5,2.5 L ${timerDimensions.width - 2.5},2.5 L ${timerDimensions.width - 2.5},${timerDimensions.height - 2.5} L 2.5,${timerDimensions.height - 2.5} Z`}
+              />
+              <path
+                ref={outlineRef}
+                className="timer-progress-bar"
+                style={{ color: MODES.find((m) => m.key === mode).color }}
+                d={`M 2.5,2.5 L ${timerDimensions.width - 2.5},2.5 L ${timerDimensions.width - 2.5},${timerDimensions.height - 2.5} L 2.5,${timerDimensions.height - 2.5} Z`}
+              />
+            </svg>
+          )}
           <div style={{position: 'relative', zIndex: 2, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-            <div className="pomo-timer-string">{formatTime(timer)}</div>
+            <div
+              className={`pomo-timer-string${timerPop ? " timer-pop" : ""}`}
+              key={isRunning + "-" + timer + "-" + isPaused}
+            >
+              {formatTime(timer)}
+            </div>
             <div className="pomo-controls">
               {!isRunning && !isPaused ? (
                 <button className="pomo-main-btn" style={{ background: MODES.find(m => m.key === mode).color }} onClick={startSession}>START</button>
@@ -220,6 +248,7 @@ const PomodoroPage = () => {
         <div>Worked {streaks.current_week_streak} week{streaks.current_week_streak === 1 ? '' : 's'} in a row</div>
       </div>
     </div>
+    </>
   );
 };
 

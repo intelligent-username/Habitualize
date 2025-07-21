@@ -8,15 +8,23 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiService from '../services/api';
+import { useSettings } from './useSettings.js';
 
-// Constants
-const SEQUENCE_CACHE_TIME = 1000 * 60 * 2; // 2 minutes
-const QUERY_RETRY_COUNT = 2;
-const DEFAULT_CATEGORY_ID = 1;
-const DEFAULT_COLOR = 'gray';
+export const useSequence = (sequenceId) => {
+    const { data: sequence, isLoading: sequenceLoading } = useQuery({
+        queryKey: ['sequence', sequenceId],
+        queryFn: () => apiService.getSequence(sequenceId),
+        enabled: !!sequenceId, // Only run if sequenceId is present
+        staleTime: 1000 * 60 * 2, // 2 minutes
+        retry: 2
+    });
+
+    return { sequence, sequenceLoading };
+};
 
 export const useSequences = (selectedDate) => {
     const queryClient = useQueryClient();
+    const { getDefaultHabitColor, getDefaultCategoryId, getDefaultHabitType } = useSettings();
     
     // Query for fetching sequences by date
     const {
@@ -28,8 +36,8 @@ export const useSequences = (selectedDate) => {
         queryKey: ['sequences', selectedDate],
         queryFn: () => apiService.getSequencesByDate(selectedDate),
         enabled: !!selectedDate,
-        staleTime: SEQUENCE_CACHE_TIME,
-        retry: QUERY_RETRY_COUNT,
+        staleTime: 1000 * 60 * 2, // 2 minutes
+        retry: 2,
         structuralSharing: true
     });
 
@@ -38,9 +46,9 @@ export const useSequences = (selectedDate) => {
         mutationFn: async (habitData) => {
             const { 
                 name, 
-                color = DEFAULT_COLOR, 
-                category_id = DEFAULT_CATEGORY_ID, 
-                type = 'binary', 
+                color = getDefaultHabitColor(), 
+                category_id = getDefaultCategoryId(), 
+                type = getDefaultHabitType(), 
                 target_value = null, 
                 cumulative = 0, 
                 cumulative_goal = null, 
@@ -149,17 +157,6 @@ export const useSequences = (selectedDate) => {
         }
     });
 
-    // Get sequence by ID (on demand)
-    const getSequence = (sequenceId) => {
-        return useQuery({
-            queryKey: ['sequence', sequenceId],
-            queryFn: () => apiService.getSequence(sequenceId),
-            enabled: !!sequenceId,
-            staleTime: SEQUENCE_CACHE_TIME,
-            retry: QUERY_RETRY_COUNT
-        });
-    };
-
     // Wrappers to match original API
     const createSingleHabitSequence = (habitData) => createSingleHabitSequenceMutation.mutateAsync(habitData);
     const createMultiStepSequence = (sequenceData) => createMultiStepSequenceMutation.mutateAsync(sequenceData);
@@ -191,6 +188,5 @@ export const useSequences = (selectedDate) => {
         createMultiStepSequence,
         updateSequence,
         deleteSequence,
-        getSequence,
     };
 };

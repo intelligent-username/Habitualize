@@ -22,7 +22,6 @@ const HabitDashboard = ({ selectedDate, selectedCategoryId }) => {
     const {
         toggleCompletion,
         deleteHabit,
-        loading: habitsLoading,
         error: habitsError
     } = useHabits();
 
@@ -102,7 +101,6 @@ const HabitDashboard = ({ selectedDate, selectedCategoryId }) => {
             )}
             {sequencesLoading && <div>Loading sequences...</div>}
             {sequencesError && <div style={{color: 'red'}}>Error loading sequences: {sequencesError}</div>}
-            {habitsLoading && <div>Processing habit...</div>}
             {habitsError && <div style={{color: 'red'}}>Habit error: {habitsError}</div>}
         </>
     );

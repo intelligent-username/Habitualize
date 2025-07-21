@@ -6,11 +6,12 @@
   margin: 1.5rem 0 1rem 0;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-light);
+  border: 1px solid var(--border);
 }
 
 .category-segment {
-  background: var(--bg-secondary);
+  background: var(--card-bg);
   color: var(--text-secondary);
   text-align: center;
   padding: 1rem 0;
@@ -18,8 +19,11 @@
   font-size: 1.2rem;
   transition: background 0.2s, color 0.2s;
   user-select: none;
+  border-right: 1px solid var(--border);
+}
 
-
+.category-segment:last-child {
+  border-right: none;
 }
 .category-segment.selected {
   background: var(--accent);
@@ -34,7 +38,7 @@
 /* --- CATEGORY MODAL & Buttons --- */
 
 .add-category-btn {
-    background: var(--bg-secondary);
+    background: var(--card-bg);
     color: var(--accent);
     border: 2px solid var(--accent);
     border-radius: 6px;
@@ -46,21 +50,22 @@
     transition: background 0.2s, color 0.2s, border 0.2s;
     margin-bottom: 1.5rem;
     margin-top: 0.5rem;
-    box-shadow: 0 2px 8px rgba(0,188,212,0.08);
+    box-shadow: var(--shadow-light);
 }
 
 .add-category-btn:hover {
     background: var(--accent);
-    color: var(--bg-primary);
+    color: #fff;
     border-color: var(--accent);
 }
 
 .category-modal-content {
-    background: var(--bg-secondary);
+    background: var(--modal-bg);
     border-radius: 12px;
     padding: 2rem 2.5rem;
     min-width: 340px;
-    box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+    box-shadow: var(--shadow-strong);
+    border: 1px solid var(--border);
 }
 
 .category-modal-header {
@@ -83,13 +88,13 @@
     font-size: 1rem;
     border-radius: 4px;
     border: 1px solid var(--border);
-    background: var(--bg-primary);
+    background: var(--input-bg);
     color: var(--text-primary);
 }
 
 .category-modal-add-row button {
     background: var(--accent);
-    color: var(--bg-primary);
+    color: #fff;
     border: none;
     border-radius: 4px;
     font-weight: 600;
@@ -99,7 +104,7 @@
 }
 
 .category-modal-add-row button:hover {
-    background: #0097a7;
+    background: var(--accent-hover);
 }
 
 .category-list {
@@ -112,27 +117,28 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--bg-primary);
+    background: var(--bg-tertiary);
     border-radius: 6px;
     padding: 0.7rem 1rem;
     margin-bottom: 0.7rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-light);
 }
 
 .category-list-item input[type="text"] {
   padding: 0.5em 0.8em;
-  border: 1px solid var(--border, #bbb);
+  border: 1px solid var(--border);
   border-radius: 5px;
   font-size: 1rem;
-  background: var(--bg-primary, #fff);
-  color: var(--text-primary, #222);
+  background: var(--input-bg);
+  color: var(--text-primary);
   outline: none;
   transition: border 0.2s, box-shadow 0.2s;
 }
 
 .category-list-item input[type="text"]:focus {
-  border-color: var(--accent, #00bcd4);
-  box-shadow: 0 0 0 2px rgba(0,188,212,0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
 }
 
 .category-list-name {
@@ -166,6 +172,18 @@
 
 .category-list-actions button:hover {
   filter: brightness(0.95);
+}
+
+.category-list-actions button.delete-btn:hover {
+  box-shadow: 0 0 8px 2px rgba(255, 0, 0, 0.25);
+  background: var(--bg-secondary);
+  color: var(--accent);
+}
+
+.category-list-actions button.edit-btn:hover {
+  box-shadow: 0 0 8px 2px rgba(255, 235, 59, 0.35);
+  background: var(--bg-secondary);
+  color: var(--accent);
 }
 
 .category-save-btn {

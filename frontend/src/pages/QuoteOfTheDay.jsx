@@ -10,6 +10,7 @@ const QuoteOfTheDayPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    document.title = "Quote of the Day";
     api
       .getQuoteOfTheDay()
       .then(setQuote)

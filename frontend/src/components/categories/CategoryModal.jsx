@@ -54,9 +54,9 @@ const CategoryModal = ({ onClose }) => {
                 <>
                   <span className="category-list-name">{cat.name}</span>
                   <div className="category-list-actions">
-                    <button onClick={() => handleStartRenameCategory(cat.id, cat.name)}>Rename</button>
+                    <button className="edit-btn" onClick={() => handleStartRenameCategory(cat.id, cat.name)}>Rename</button>
                     {cat.id !== 1 && (
-                      <button onClick={() => handleDeleteCategory(cat.id)}>Delete</button>
+                      <button className="delete-btn" onClick={() => handleDeleteCategory(cat.id)}>Delete</button>
                     )}
                   </div>
                 </>

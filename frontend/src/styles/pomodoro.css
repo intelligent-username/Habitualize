@@ -1,9 +1,10 @@
 .pomodoro-timer-box {
-  background: rgba(245,245,250,0.7);
+  background: var(--card-bg);
   border-radius: 1rem;
   padding: 2.5rem 2rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
+  box-shadow: var(--shadow-medium);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,7 +13,7 @@
 }
 
 .pomodoro-timer-box p {
-  color: #555;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   margin-top: 1.2rem;
 }
@@ -37,11 +38,12 @@
   padding: 0.7rem 2.2rem;
   border-radius: 2rem;
   border: none;
-  background: var(--bg-secondary);
+  background: var(--card-bg);
   color: var(--text-primary);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.10);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: var(--shadow-light);
+  border: 1px solid var(--border);
   outline: none;
   letter-spacing: 0.01em;
   min-width: 8rem;
@@ -49,8 +51,17 @@
 
 .pomo-mode-btn.active {
   color: #fff;
-  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.18);
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-medium);
   transform: scale(1.05);
+}
+
+.pomo-mode-btn:not(.active):hover {
+  box-shadow: var(--shadow-medium);
+  transform: scale(1.03);
+  background: var(--accent-light);
+  border-color: var(--accent);
 }
 
 .pomo-mode-span {
@@ -73,6 +84,27 @@
   box-sizing: border-box;
   width: auto;
   max-width: 50rem;
+}
+
+/* --- Subtle animated timer background --- */
+.pomo-timer-section::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 98%; height: 98%;
+  background: radial-gradient(circle at 50% 50%, rgba(0,188,212,0.06) 0%, rgba(0,0,0,0) 80%);
+  transform: translate(-50%, -50%) scale(1);
+  border-radius: 1.2rem;
+  z-index: 0;
+  pointer-events: none;
+  animation: timer-bg-pop 0.4s cubic-bezier(.4,2,.6,1) forwards;
+  opacity: 0.7;
+}
+
+@keyframes timer-bg-pop {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  20% { transform: translate(-50%, -50%) scale(1.03); }
+  100% { transform: translate(-50%, -50%) scale(1); }
 }
 
 /* SVG Outline */
@@ -112,6 +144,16 @@
   text-shadow: 0 2px 24px rgba(0,188,212,0.10), 0 1px 2px #000;
   position: relative;
   z-index: 2;
+}
+
+.pomo-timer-string.timer-pop {
+  animation: timer-pop 0.3s;
+}
+
+@keyframes timer-pop {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.03); }
+  100% { transform: scale(1); }
 }
 
 .pomo-controls {
@@ -357,6 +399,16 @@
   background: #06702B;
 }
 
+/* --- Subtle confetti/particle effect --- */
+.celebration .particle {
+  opacity: 0.7;
+  filter: blur(0.5px);
+  background: linear-gradient(135deg, #ba4949 60%, #00bcd4 100%);
+  width: 8px;
+  height: 8px;
+  animation: particle-animation 1.5s cubic-bezier(.4,2,.6,1) forwards;
+}
+
 /* Celebration Animation */
 .celebration {
   position: absolute;
@@ -477,5 +529,91 @@
   .pomo-graph-container {
     height: 250px;
   }
+}
+
+@media (max-width: 900px) {
+  .pomo-stats-multi {
+    flex-direction: column;
+    gap: 1.2rem;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .pomo-stats, #pomo-today {
+    min-width: 0;
+    max-width: 100%;
+    padding: 1.2rem 1rem;
+    font-size: 1.1rem;
+  }
+  #pomo-today {
+    height: auto;
+    padding: 1.2rem 1rem;
+  }
+}
+
+/* Light theme overrides for Pomodoro */
+:root.light-theme .pomo-stats {
+    background: linear-gradient(135deg, #f1f3f4 80%, rgba(21, 101, 192, 0.08) 100%);
+    box-shadow: 0 2px 12px rgba(21, 101, 192, 0.08), 0 1px 4px rgba(0, 0, 0, 0.05);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+:root.light-theme .pomo-stats h2 {
+    color: var(--accent);
+}
+
+:root.light-theme #pomo-today {
+    background: linear-gradient(135deg, #e8eaed 80%, #1565c0 100%);
+    border-color: var(--success);
+    color: var(--text-primary);
+    box-shadow: 0 4px 24px rgba(21, 101, 192, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+:root.light-theme #pomo-today h2 {
+    color: var(--success);
+}
+
+:root.light-theme #pomo-today div {
+    color: var(--text-primary);
+}
+
+:root.light-theme .pomo-timer-string {
+    color: var(--accent);
+    text-shadow: 0 2px 24px rgba(21, 101, 192, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+:root.light-theme .pomo-line-graph {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+:root.light-theme .pomo-graph-title {
+    color: var(--text-primary);
+}
+
+:root.light-theme .pomo-view-toggle {
+    background: var(--bg-primary);
+    border-color: var(--border);
+}
+
+:root.light-theme .pomo-view-btn {
+    color: var(--text-secondary);
+}
+
+:root.light-theme .pomo-view-btn.active {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+:root.light-theme .return-btn {
+    background: var(--accent);
+    box-shadow: 0 2px 8px rgba(21, 101, 192, 0.2);
+}
+
+:root.light-theme .return-btn:hover {
+    background: var(--success);
 }
 

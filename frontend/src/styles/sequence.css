@@ -1,7 +1,7 @@
 /* Sequences */
 
 .sequence-habit {
-    background: var(--bg-secondary);
+    background: var(--card-bg);
     border-left: 10px solid var(--accent);
     border-radius: 8px;
     margin-bottom: 1.2rem;
@@ -11,6 +11,8 @@
     align-items: center;
     justify-content: space-between;
     transition: background 0.2s;
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-light);
 }
 
 .sequence-habit.completed {
@@ -41,7 +43,7 @@
     font-size: 1.1rem;
     border-radius: 6px;
     border: 1px solid var(--border);
-    background: var(--bg-secondary);
+    background: var(--input-bg);
     color: var(--text-primary);
 }
 
@@ -50,7 +52,7 @@
     margin-left: 10px;
     border-left: 2px solid var(--accent);
     padding-left: 10px;
-    background: var(--bg-primary);
+    background: var(--bg-tertiary);
     border-radius: 6px;
     padding-top: 10px;
     padding-bottom: 10px;
@@ -63,7 +65,7 @@
     font-size: 1rem;
     border-radius: 6px;
     border: 1px solid var(--border);
-    background: var(--bg-secondary);
+    background: var(--input-bg);
     color: var(--text-primary);
 }
 
@@ -80,15 +82,16 @@
 }
 
 .add-subsequence-btn:hover {
-    background: #0097a7;
+    background: var(--accent-hover);
 }
 
 .subsequence-row {
     margin-top: 8px;
     margin-left: 16px;
-    background: var(--bg-secondary);
+    background: var(--card-bg);
     border-radius: 6px;
     padding: 8px;
+    border: 1px solid var(--border-light);
 }
 
 .subsequence-habit-row {
@@ -99,12 +102,12 @@
 }
 
 .sequence-group {
-  background: #181c20;
+  background: var(--card-bg);
   border: 2.5px solid var(--accent);
   border-radius: 16px;
   padding: 2rem 2.2rem 1.5rem 2.2rem;
   margin-bottom: 2.5rem;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  box-shadow: var(--shadow-light);
   position: relative;
 }
 
@@ -132,13 +135,13 @@
 }
 
 .edit-sequence-btn:hover {
-  background: #0097a7;
+  background: var(--accent-hover);
 }
 
 .delete-sequence-btn {
   display: block;
   margin: 1.2rem auto 0 auto;
-  background: #e53935;
+  background: var(--danger);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -146,7 +149,7 @@
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(229,57,53,0.08);
+  box-shadow: var(--shadow-light);
   transition: background 0.18s, color 0.18s;
 }
 

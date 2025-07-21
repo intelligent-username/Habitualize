@@ -303,3 +303,84 @@
 .sidebar.open .sidebar-nav-item:nth-child(3) { animation-delay: 0.2s; }
 .sidebar.open .sidebar-nav-item:nth-child(4) { animation-delay: 0.25s; }
 .sidebar.open .sidebar-nav-item:nth-child(5) { animation-delay: 0.3s; }
+
+/* Light theme overrides for sidebar */
+:root.light-theme .sidebar-toggle {
+    background: var(--bg-secondary);
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(21, 101, 192, 0.15);
+}
+
+:root.light-theme .sidebar-toggle:hover {
+    background: var(--accent);
+    box-shadow: 0 6px 20px rgba(21, 101, 192, 0.25);
+}
+
+:root.light-theme .sidebar-toggle.active {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+:root.light-theme .hamburger span {
+    background: var(--text-primary);
+}
+
+:root.light-theme .sidebar {
+    background: var(--sidebar-bg);
+    border-right-color: var(--sidebar-border);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
+}
+
+:root.light-theme .sidebar.open {
+    box-shadow: 0 0 50px rgba(21, 101, 192, 0.08);
+}
+
+:root.light-theme .sidebar-header {
+    border-bottom-color: var(--sidebar-border);
+}
+
+:root.light-theme .sidebar-logo {
+    color: var(--accent);
+}
+
+:root.light-theme .sidebar-subtitle {
+    color: var(--text-secondary);
+}
+
+:root.light-theme .sidebar-nav-item {
+    color: var(--text-primary);
+}
+
+:root.light-theme .sidebar-nav-item:hover {
+    background: rgba(21, 101, 192, 0.08);
+    border-left-color: var(--accent);
+    color: var(--accent);
+}
+
+:root.light-theme .sidebar-nav-item.active {
+    background: rgba(21, 101, 192, 0.12);
+    border-left-color: var(--accent);
+    color: var(--accent);
+}
+
+:root.light-theme .sidebar-nav-item::before {
+    background: linear-gradient(90deg, transparent, rgba(21, 101, 192, 0.08), transparent);
+}
+
+:root.light-theme .sidebar-nav-badge {
+    background: var(--accent);
+    color: #ffffff;
+}
+
+:root.light-theme .sidebar-footer {
+    border-top-color: var(--sidebar-border);
+    background: rgba(21, 101, 192, 0.03);
+}
+
+:root.light-theme .sidebar-user-name {
+    color: var(--text-primary);
+}
+
+:root.light-theme .sidebar-user-status {
+    color: var(--text-secondary);
+}

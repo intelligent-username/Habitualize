@@ -9,6 +9,7 @@ const SequenceGroup = ({
   onDeleteHabit,
   onEditHabit
 }) => {
+
   // If this is a single-habit sequence, render as a single HabitItem
   if (sequence.steps.length === 1) {
     const habit = sequence.steps[0];
@@ -37,9 +38,13 @@ const SequenceGroup = ({
               habit={{ ...habit, color: sequence.color, category_id: sequence.category_id }}
               toggleCompletion={(id, completed, value) => {
                 if (!completed && idx < sequence.steps.length - 1) {
+                  // When unchecking this step, uncheck all subsequent completed steps
                   for (let i = idx + 1; i < sequence.steps.length; i++) {
                     if (sequence.steps[i].completed) {
-                      onToggleCompletion(sequence.steps[i].id, false);
+                      // For counter/entry habits, send value=0 to trigger deletion
+                      const stepHabit = sequence.steps[i];
+                      const resetValue = (stepHabit.type === "counter" || stepHabit.type === "entry") ? 0 : 0;
+                      onToggleCompletion(sequence.steps[i].id, false, resetValue);
                     }
                   }
                 }

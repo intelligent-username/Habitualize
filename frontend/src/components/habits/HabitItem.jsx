@@ -3,14 +3,15 @@ import Icon from "../ui/Icon";
 import { COLOR_OPTIONS, formatTime } from "../../utils/constants";
 import { useHabitTimer, useHabitCounters } from "../../hooks/useHabitControls.js";
 import { useCumulativeProgress } from '../../hooks/useCumulativeProgress';
+import { useSettings } from "../../hooks/useSettings.js";
 
-/**
- * HabitItem - Component for displaying and interacting with individual habits
- * Handles different habit types with a universal layout.
- */
+// Universal Component for displaying & interacting w/ individual habits
+
 export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabled }) => {
     const colorHex = COLOR_OPTIONS.find(opt => opt.value === habit.color)?.hex || "#b0b0b0";
     const textColor = "#fff";
+    const { getShowHabitIcons } = useSettings();
+    const showHabitIcons = getShowHabitIcons() !== undefined ? getShowHabitIcons() : true;
 
     const { timer, timerRunning, setTimerRunning, setTimer } = useHabitTimer(habit, toggleCompletion);
     const { entryValue, setEntryValue } = useHabitCounters(habit);
@@ -19,28 +20,43 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
     const isSpecial = habit.type === "counter" || habit.type === "entry" || habit.type === "timer";
 
     if (habit.type === "counter") {
-        const displayValue = `${habit.value || 0}/${habit.target_value || "?"}`;
+        const current = habit.value || 0;
+        const goal = habit.target_value || 1;
+        const displayValue = `${current}/${goal}`;
         habitControls = (
             <div className="counter-control">
                 <div className="counter-wheel">
                     <button
                         className="counter-wheel-btn counter-up-btn"
-                        onClick={() => toggleCompletion(habit.id, false, 1)}
-                        disabled={habit.completed}
+                        onClick={() => {
+                            if (current < goal) {
+                                toggleCompletion(habit.id, true, current + 1);
+                            }
+                        }}
+                        disabled={current >= goal}
                         title="Increase"
                     >▲</button>
                     <div className="counter-wheel-value">{displayValue}</div>
                     <button
                         className="counter-wheel-btn counter-down-btn"
-                        onClick={() => { if ((habit.value || 0) > 0) { toggleCompletion(habit.id, false, -1); } }}
-                        disabled={false}
+                        onClick={() => {
+                            if (current > 1) {
+                                toggleCompletion(habit.id, true, current - 1);
+                            } else if (current === 1) {
+                                // If decrementing to zero, uncheck (delete history)
+                                toggleCompletion(habit.id, false, 0);
+                            }
+                        }}
+                        disabled={current <= 0}
                         title="Decrease"
                     >▼</button>
                 </div>
             </div>
         );
     } else if (habit.type === "entry") {
-        const displayValue = `${habit.value || 0}/${habit.target_value || "?"}`;
+        const current = habit.value || 0;
+        const goal = habit.target_value || 1;
+        const displayValue = `${current}/${goal}`;
         habitControls = (
             <div className="entry-control">
                 <input
@@ -55,7 +71,9 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
                         if (e.key === "Enter") {
                             const addVal = Number(entryValue) || 0;
                             setEntryValue("");
-                            if (addVal > 0) toggleCompletion(habit.id, false, addVal);
+                            if (addVal > 0 && current + addVal <= goal) {
+                                toggleCompletion(habit.id, true, current + addVal);
+                            }
                         }
                     }}
                 />
@@ -64,8 +82,11 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
                     onClick={() => {
                         const addVal = Number(entryValue) || 0;
                         setEntryValue("");
-                        if (addVal > 0) toggleCompletion(habit.id, false, addVal);
+                        if (addVal > 0 && current + addVal <= goal) {
+                            toggleCompletion(habit.id, true, current + addVal);
+                        }
                     }}
+                    disabled={current >= goal}
                 >Add</button>
                 <span className="counter-progress">{displayValue}</span>
             </div>
@@ -99,28 +120,41 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
             cumulativeControls = <span className="cumulative-progress error">Error</span>;
         } else if (progressData) {
             const { progress, goal, period, is_complete } = progressData;
-            const displayValue = `${progress}/${goal}`;
+            const percent = Math.min(100, (progress / goal) * 100);
             isCompleted = is_complete;
             cumulativeControls = (
-                <div className="cumulative-control">
-                    <div className="counter-wheel">
-                        <button
-                            className="counter-wheel-btn counter-up-btn"
-                            onClick={() => toggleCompletion(habit.id, false, 1)}
-                            disabled={progress >= goal}
-                            title="Add 1"
-                        >▲</button>
-                        <div className="counter-wheel-value">
-                            {displayValue} <span className="cumulative-period">({period})</span>
+                <div className="cumulative-progress-bar" style={{ width: '100%' }}>
+                    <button
+                        className="cumulative-counter-btn"
+                        onClick={() => { if (progress > 0) { toggleCompletion(habit.id, false, -1); } }}
+                        disabled={progress <= 0}
+                        title="Remove 1"
+                        aria-label="Remove 1"
+                    >
+                        ▼
+                    </button>
+                    <div
+                        className={`cumulative-progress-bar-main${isCompleted ? ' filled' : ''}`}
+                        data-diagonal="true"
+                        style={{ width: '100%', minWidth: 0 }}
+                    >
+                        <div
+                            className="cumulative-progress-fill"
+                            style={{ width: percent + '%' }}
+                        />
+                        <div className="cumulative-progress-value">
+                            {progress}/{goal} <span style={{ fontSize: '0.95rem', color: '#b0ffb0', opacity: 0.7 }}>({period})</span>
                         </div>
-                        <button
-                            className="counter-wheel-btn counter-down-btn"
-                            onClick={() => { if (progress > 0) { toggleCompletion(habit.id, false, -1); } }}
-                            disabled={progress <= 0}
-                            title="Remove 1"
-                        >▼</button>
                     </div>
-                    <progress value={progress} max={goal} style={{ width: '100%', marginTop: 4 }} />
+                    <button
+                        className="cumulative-counter-btn"
+                        onClick={() => toggleCompletion(habit.id, false, 1)}
+                        disabled={progress >= goal}
+                        title="Add 1"
+                        aria-label="Add 1"
+                    >
+                        ▲
+                    </button>
                 </div>
             );
         }
@@ -136,7 +170,11 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
             setTimerRunning(false);
             valueToLog = isChecked ? timer : 0;
         } else if (habit.type === "counter" || habit.type === "entry") {
-            valueToLog = isChecked ? (habit.target_value || 1) : 0;
+            // For counter/entry habits: send a positive value when marking as complete
+            const goal = habit.target_value || 1;
+            valueToLog = isChecked ? goal : 0;
+            toggleCompletion(habit.id, isChecked, valueToLog);
+            return;
         }
 
         toggleCompletion(habit.id, isChecked, valueToLog);
@@ -155,7 +193,7 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
                 filter: disabled ? "grayscale(0.7)" : "none"
             }}
         >
-            <Icon iconName={habit.icon} className="habit-icon" alt={`${habit.name} icon`} />
+            {showHabitIcons && <Icon iconName={habit.icon} className="habit-icon" alt={`${habit.name} icon`} />}
             <span className="habit-name">{habit.name}</span>
             <div className="habit-right">
                 <div className="habit-actions-row">
@@ -171,6 +209,8 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
                             className="habit-checkbox"
                             checked={isCompleted}
                             onChange={handleCheckboxChange}
+                            disabled={disabled}
+                            title={habit.type === "counter" ? "Mark as complete" : "Mark as complete"}
                         />
                     )}
                 </div>

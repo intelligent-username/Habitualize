@@ -1,6 +1,5 @@
 """
 SPECIFIC Utilities for the different routes
-This file requires refactoring also (later)
 """
 
 # Might have to refactor this file, getting too long
@@ -15,6 +14,7 @@ from database.connection import run_query
 from datetime import datetime
 import random
 from services.utils import calculate_end_date
+from services.settings_service import get_week_start_day, get_default_habit_type, get_default_habit_icon
 
 
 def get_cumulative_progress_details(habit_id):
@@ -28,19 +28,25 @@ def get_cumulative_progress_details(habit_id):
         goal = goal_details['cumulative_goal'] if goal_details else None
         period = goal_details['cumulative_period'] if goal_details else None
 
-        # Robustly check for missing/invalid cumulative fields
         if not goal_details or goal is None or period is None or str(period).strip() == '':
             current_app.logger.warning(
                 f"Attempted to get cumulative progress for habit_id {habit_id}, but it's missing a valid cumulative_goal or cumulative_period."
             )
             return None
 
-        # 2. Calculate the correct start and end dates using our utility
-        start_date = calculate_start_date(period, start_day_str='sunday')
+        # 2. Calculate the correct start and end dates
+        week_start = 'sunday' if get_week_start_day() == 0 else 'monday'
+        start_date = calculate_start_date(period, start_day_str=week_start)
         end_date = calculate_end_date(period, start_date)
-        if not start_date or not end_date:
+        if not start_date:
             current_app.logger.error(
-                f"Invalid period '{period}' stored for habit_id {habit_id}. Cannot calculate start or end date."
+                f"Invalid period '{period}' stored for habit_id {habit_id}. Cannot calculate start date."
+            )
+            return None
+        
+        if not end_date:
+            current_app.logger.error(
+                f"Invalid period '{period}' stored for habit_id {habit_id}. Cannot calculate end date."
             )
             return None
 
@@ -88,8 +94,26 @@ def _check_sequence_preconditions(habit_id, date):
         prev_habit_info = run_query(FETCH_SEQ_HAB, params=(sequence_id, step_order - 1), fetch='one')
         if prev_habit_info:
             prev_habit_id = prev_habit_info['id']
-            prev_habit_completed = run_query(FETCH_HABIT_COMPLETION_STATUS, params=(prev_habit_id, date), fetch='one')
-            if not prev_habit_completed or not prev_habit_completed['completed']:
+            
+            # Get the habit type for the previous habit
+            prev_habit_details = run_query(FETCH_TYPE_AND_CUMULATIVE, params=(prev_habit_id,), fetch='one')
+            prev_habit_type = prev_habit_details['type'] if prev_habit_details else get_default_habit_type()
+
+            # Handle reverse binary habits correctly
+            if prev_habit_type == "reverse_binary":
+                history_row = run_query(FETCH_HABIT_COMPLETION_STATUS, params=(prev_habit_id, date), fetch='one')
+                if not history_row:
+                    # No history entry exists, so create one marking it as completed (default for reverse binary)
+                    run_query(MAKE_CONTRIBUTION, params=(prev_habit_id, date, 1, 1))
+                    is_completed = True
+                else:
+                    is_completed = bool(history_row['completed'])
+            else:
+                # For other habit types: use standard completion check
+                prev_habit_completed = run_query(FETCH_HABIT_COMPLETION_STATUS, params=(prev_habit_id, date), fetch='one')
+                is_completed = prev_habit_completed and prev_habit_completed['completed']
+            
+            if not is_completed:
                 return {"error": "Previous step in sequence not completed"}, 400
     return None
 
@@ -98,12 +122,19 @@ def _persist_habit_history(habit_id, date, completed, value, habit_type, cumulat
     """
     Handles the database logic for inserting, updating, or deleting a habit history entry.
     """
-    if habit_type in ("counter", "entry") or cumulative:
-        if completed == 0 and value == 0:
+    if habit_type in ("counter", "cumulative", "total") or cumulative:
+        if completed == 0:
+            # When unchecking counter/cumulative habits, delete the history entry
             run_query(DEL_HISTORY_BY_DATE, params=(habit_id, date))
-        elif value != 0:
-            # BUG: Non-zero (elif) does not imply completion, whole function is kind of goofy. Fix later (not major rn).
-            run_query(MAKE_CONTRIBUTION, params=(habit_id, date, 1, value))
+        elif value > 0:
+            # For counter/cumulative habits, always check if entry exists first to avoid duplicates
+            existing_entry = run_query(FETCH_HABIT_HISTORY_ENTRY, params=(habit_id, date), fetch='one')
+            if existing_entry:
+                # Update existing entry with new value
+                run_query(UPDATE_HABIT_HISTORY_ENTRY, params=(1, value, habit_id, date))
+            else:
+                # Create new entry
+                run_query(MAKE_CONTRIBUTION, params=(habit_id, date, 1, value))
     else:  # Binary habits
         existing_entry = run_query(FETCH_HABIT_HISTORY_ENTRY, params=(habit_id, date), fetch='one')
         if existing_entry:
@@ -125,7 +156,8 @@ def update_habit_completion_status(habit_id, date, completed, value):
 
     # 2. Fetch necessary data
     habit_details = run_query(FETCH_TYPE_AND_CUMULATIVE, params=(habit_id,), fetch='one')
-    habit_type = habit_details['type'] if habit_details else "binary"
+    habit_type = habit_details['type'] if habit_details else get_default_habit_type()
+
     cumulative = habit_details['cumulative'] if habit_details else 0
 
     # 3. Persist the changes
@@ -170,7 +202,7 @@ def _execute_database_updates(habit_id, merged_data, original_payload):
         merged_data.get('cumulative_period'),
         merged_data.get('sequence_id'), 
         merged_data.get('step_order'), 
-        merged_data.get('icon', current_app.config.get('DEFAULT_ICON', 'default.svg')), 
+        merged_data.get('icon', get_default_habit_icon()), 
         habit_id
     )
     current_app.logger.info(f"Executing update for habit {habit_id} with SQL: '{UPDATE_HABIT.strip()}' and params: {params_for_habit_update}")
@@ -181,13 +213,7 @@ def update_sequence(sequence_id, data):
     """
     Updates the sequence properties like color and category_id.
     """
-    sql = """
-    UPDATE sequences
-    SET name = COALESCE(NULLIF(:name, ''), name),
-        color = COALESCE(NULLIF(:color, ''), color),
-        category_id = COALESCE(:category_id, category_id)
-    WHERE id = :sequence_id
-    """
+    sql = UPDATE_SEQ
     params = {
         'name': data.get('name'),
         'color': data.get('color'),
@@ -261,7 +287,12 @@ def _get_habit_progress_for_date(habit_row, date):
 
     if habit_type == "reverse_binary":
         history_row = run_query(FETCH_HABIT_COMPLETION_STATUS, params=(habit_id, date), fetch='one')
-        progress['completed'] = not history_row or bool(history_row['completed'])
+        if not history_row:
+            # No history entry exists, so create one marking it as completed (default for reverse binary)
+            run_query(MAKE_CONTRIBUTION, params=(habit_id, date, 1, 1))
+            progress['completed'] = True
+        else:
+            progress['completed'] = bool(history_row['completed'])
         progress['value'] = 1 if progress['completed'] else 0
 
     elif habit_type in ("counter", "entry") or is_cumulative:
@@ -334,36 +365,22 @@ def insert_pomodoro_session(goal_duration_minutes, time_started):
 
 def finish_pomodoro_session(session_id, time_finished, completed, time_completed=None):
     # Fetch the start time from the database
-    session_data = run_query("SELECT time_started, goal_duration_minutes FROM pomodoro_sessions WHERE id = ?", (session_id,), fetch='one')
+    session_data = run_query(POM_CALC, (session_id,), fetch='one')
     if not session_data:
         current_app.logger.error(f"Could not find pomodoro session with id {session_id} to finish.")
         return
 
-    # Calculate the duration on the backend to ensure accuracy
-    time_started_str = session_data['time_started']
-    
-    # The frontend sends ISO 8601 format with 'Z' (UTC), which Python's fromisoformat can parse
-    # if it ends with +00:00. We'll handle both 'Z' and timezone-aware strings.
-    try:
-        time_started = datetime.fromisoformat(time_started_str.replace('Z', '+00:00'))
-        time_finished_obj = datetime.fromisoformat(time_finished.replace('Z', '+00:00'))
-        
-        duration_seconds = (time_finished_obj - time_started).total_seconds()
-        duration_minutes = duration_seconds / 60.0
-    except ValueError as e:
-        current_app.logger.error(f"Error parsing date strings for session {session_id}: {e}")
-        # As a fallback, use the client-sent time if parsing fails, though this is not ideal.
-        duration_minutes = time_completed if time_completed is not None else 0
+    # Always use the frontend's time_completed value for accuracy
+    duration_minutes = time_completed if time_completed is not None else 0
 
     # If the session was not marked as 'completed' via the timer finishing,
     # we still record the actual time spent. The 'completed' flag now strictly
     # means "Did the timer finish naturally?".
     # We also check if the time worked is a significant portion of the goal, e.g., 95%
-    # This handles cases where the timer is a few seconds off due to browser throttling.
     goal_minutes = session_data['goal_duration_minutes']
     if not completed and (duration_minutes >= goal_minutes * 0.95):
         completed = True
-        
+    
     run_query(FINISH_POMODORO_SESSION, (time_finished, completed, duration_minutes, session_id))
 
 
@@ -373,21 +390,24 @@ def get_pomodoro_stats(range_type, start=None):
     range_type: 'day', 'week', 'month', or 'all'
     start: ISO date string (YYYY-MM-DD) for 'day' and 'week', or 'YYYY-MM' for 'month'.
     """
+    # Always interpret the 'start' date as local time, but filter using the local date derived from UTC timestamps
     if range_type == 'day':
         date_str = start or datetime.now().strftime('%Y-%m-%d')
-        x = run_query(FETCH_POMODORO_DAY, (date_str,))
+        # Use SQLite's datetime(time_started, 'localtime') to convert UTC to local before filtering
+        x = run_query(POM_TIMER_CALC2, (date_str,))
     elif range_type == 'week':
-        # `start` should be the first day of the week (YYYY-MM-DD), Sunday by default
         if start:
             start_date = datetime.strptime(start, '%Y-%m-%d')
         else:
             today = datetime.now()
             start_date = today - timedelta(days=today.weekday())  # Monday as start of week
         end_date = start_date + timedelta(days=6)
-        x = run_query(FETCH_POMODORO_WEEK, (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
+        # Filter using local date range
+        x = run_query(POM_TIMER_CALC3, (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
     elif range_type == 'month':
         month_str = start or datetime.now().strftime('%Y-%m')
-        x = run_query(FETCH_POMODORO_MON, (month_str,))
+        # Filter using local month
+        x = run_query(FETCH_POM_LOC, (month_str,))
     else:
         x = run_query(FETCH_POMODORO_ALL)
     return [dict(row) for row in x]
