@@ -15,6 +15,8 @@ export default function PomodoroLineGraph({
   isLoading,
   onPointClick
 }) {
+
+
   registerPomodoroChartPlugins();
   const { chartData, options } = usePomodoroChartConfig(data, viewType, onPointClick);
   return (

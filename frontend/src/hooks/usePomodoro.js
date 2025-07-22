@@ -25,6 +25,8 @@ export function usePomodoro(onSessionComplete) {
 
   const intervalRef = useRef(null);
   const audioRef = useRef(null);
+  const shortBreakAudioRef = useRef(null);
+  const longBreakAudioRef = useRef(null);
 
   const switchToNextMode = useCallback(() => {
     setMode((prevMode) => {
@@ -59,16 +61,25 @@ export function usePomodoro(onSessionComplete) {
       if (onSessionComplete) onSessionComplete();
     }
 
-    if (completed && mode === 'pomodoro') {
-      setCelebrate(true);
-      setTimeout(() => setCelebrate(false), 2000);
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play();
-      }
-    }
-
     if (completed) {
+      if (mode === 'pomodoro') {
+        setCelebrate(true);
+        setTimeout(() => setCelebrate(false), 2000);
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play();
+        }
+      } else if (mode === 'short_break') {
+        if (shortBreakAudioRef.current) {
+          shortBreakAudioRef.current.currentTime = 0;
+          shortBreakAudioRef.current.play();
+        }
+      } else if (mode === 'long_break') {
+        if (longBreakAudioRef.current) {
+          longBreakAudioRef.current.currentTime = 0;
+          longBreakAudioRef.current.play();
+        }
+      }
       switchToNextMode();
     }
   }, [sessionId, mode, workDuration, timer, onSessionComplete, switchToNextMode]);
@@ -269,6 +280,8 @@ export function usePomodoro(onSessionComplete) {
     isRunning, isPaused,
     celebrate,
     audioRef,
+    shortBreakAudioRef,
+    longBreakAudioRef,
     startSession, pauseSession, resumeSession, handleStop,
     formatTime,
     MODES

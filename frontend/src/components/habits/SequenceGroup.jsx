@@ -7,7 +7,8 @@ const SequenceGroup = ({
   onDeleteSequence,
   onToggleCompletion,
   onDeleteHabit,
-  onEditHabit
+  onEditHabit,
+  viewedDate
 }) => {
 
   // If this is a single-habit sequence, render as a single HabitItem
@@ -20,6 +21,7 @@ const SequenceGroup = ({
         toggleCompletion={onToggleCompletion}
         deleteHabit={h => onDeleteHabit(h, sequence)}
         onEdit={onEditHabit}
+        viewedDate={viewedDate}
       />
     );
   }
@@ -53,6 +55,7 @@ const SequenceGroup = ({
               deleteHabit={h => onDeleteHabit(h, sequence)}
               onEdit={onEditHabit}
               disabled={disabled}
+              viewedDate={viewedDate}
             />
           );
         })}

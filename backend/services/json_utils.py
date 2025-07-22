@@ -22,6 +22,19 @@ _HYDRATED_HABIT_STEP_KEYS = [
     "cumulative", "cumulative_goal", "cumulative_period", "icon"
 ]
 
+ # Analytics JSON key lists
+COMPLETIONS_TREND_KEYS = ["period", "count"]
+HABIT_CONSISTENCY_KEYS = [
+    "habit_id", "name", "type", "sequence_name", "category_name",
+    "is_cumulative", "is_single_habit", "sequence_habit_count",
+    "completion_percent", "total_tracked_days", "completed_days",
+    "first_tracked", "last_tracked"
+]
+HABIT_DETAILS_KEYS = [
+    "habit_id", "name", "type", "category", "completion_percent",
+    "total_tracked_days", "completed_days", "first_tracked", "last_tracked"
+]
+
 
 def _serialize_row(row, keys):
     """

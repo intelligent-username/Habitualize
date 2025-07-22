@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import './App.css';
 import { Sidebar } from "./components/ui";
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -11,17 +11,17 @@ import Dashboard from "./components/Dashboard/Dashboard.jsx";
 import HomeButton from "./components/ui/HomeButton.jsx";
 import { useSettings } from "./hooks/useSettings.js";
 import { setWeekStartDay as setTimeHelpersWeekStart } from './utils/timeHelpers.js';
-import { setWeekStartDay as setChartHelpersWeekStart } from './utils/chartHelpers.js';
-import { setWeekStartDay as setPomodoroNavWeekStart } from './hooks/usePomodoroNavigation.js';
+import { updateWeekStartDay } from './hooks/usePomodoroNavigation.js';
 
 const AppContent = () => {
     const { getWeekStartDay, getTheme } = useSettings();
+    const [settingsLoaded, setSettingsLoaded] = useState(false);
 
     useEffect(() => {
         const weekStartDay = getWeekStartDay();
         setTimeHelpersWeekStart(weekStartDay);
-        setChartHelpersWeekStart(weekStartDay);
-        setPomodoroNavWeekStart(weekStartDay);
+        updateWeekStartDay(weekStartDay); // Use the correct function
+        setSettingsLoaded(true); // Signal that settings are loaded
     }, [getWeekStartDay]);
 
     // Apply theme from settings
@@ -33,6 +33,10 @@ const AppContent = () => {
             document.documentElement.classList.remove('light-theme');
         }
     }, [getTheme]);
+
+    if (!settingsLoaded) {
+        return <div>Loading...</div>; // Or a spinner component
+    }
 
     return (
         <>

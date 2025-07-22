@@ -1,4 +1,4 @@
-"""Categories API. Create, Edit, Fetch, and Delete"""
+"""Categories API. Create, Edit, Fetch, & Delete"""
 
 from flask import Blueprint, jsonify, request
 import sys

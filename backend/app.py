@@ -17,6 +17,7 @@ from routes.pomodoro import pomodoro_bp
 from routes.quotes import quotes_bp
 from routes.settings import settings_bp
 from routes.data import data_bp
+from routes.analytics import analytics_bp
 
 app = Flask(__name__)
 app.config['DATABASE'] = 'data.db'
@@ -42,9 +43,7 @@ app.register_blueprint(pomodoro_bp)
 app.register_blueprint(quotes_bp)
 app.register_blueprint(settings_bp)
 app.register_blueprint(data_bp)
-# # TODO: Finish the "Analytics" and "Settings" blueprints (and the pages, for that matter)
-# app.register_blueprint(analytics_bp)
-# app.register_blueprint(settings_bp)
+app.register_blueprint(analytics_bp)
 
 
 @app.errorhandler(404)

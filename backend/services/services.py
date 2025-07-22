@@ -17,7 +17,7 @@ from services.utils import calculate_end_date
 from services.settings_service import get_week_start_day, get_default_habit_type, get_default_habit_icon
 
 
-def get_cumulative_progress_details(habit_id):
+def get_cumulative_progress_details(habit_id, date=None):
     """
     Fetches and calculates all details for a habit's cumulative progress.
     Returns a dictionary with progress details, or None if the habit is invalid.
@@ -25,45 +25,47 @@ def get_cumulative_progress_details(habit_id):
     try:
         # 1. Fetch the habit's goal and period from the database
         goal_details = run_query(FETCH_HABIT_GOAL_DETAILS, params=(habit_id,), fetch='one')
-        goal = goal_details['cumulative_goal'] if goal_details else None
-        period = goal_details['cumulative_period'] if goal_details else None
-
-        if not goal_details or goal is None or period is None or str(period).strip() == '':
-            current_app.logger.warning(
-                f"Attempted to get cumulative progress for habit_id {habit_id}, but it's missing a valid cumulative_goal or cumulative_period."
-            )
-            return None
-
-        # 2. Calculate the correct start and end dates
-        week_start = 'sunday' if get_week_start_day() == 0 else 'monday'
-        start_date = calculate_start_date(period, start_day_str=week_start)
-        end_date = calculate_end_date(period, start_date)
-        if not start_date:
-            current_app.logger.error(
-                f"Invalid period '{period}' stored for habit_id {habit_id}. Cannot calculate start date."
-            )
-            return None
         
-        if not end_date:
-            current_app.logger.error(
-                f"Invalid period '{period}' stored for habit_id {habit_id}. Cannot calculate end date."
-            )
+        if not goal_details:
+            current_app.logger.warning(f"Habit {habit_id} not found")
+            return None
+            
+        goal = goal_details['cumulative_goal']
+        period = goal_details['cumulative_period']
+
+        # Check if this is actually a cumulative habit
+        if goal is None:
+            current_app.logger.warning(f"Habit {habit_id} is not a cumulative habit (no cumulative_goal)")
+            return None
+            
+        if not period or str(period).strip() == '':
+            current_app.logger.warning(f"Habit {habit_id} has invalid cumulative_period")
             return None
 
-        # 3. Fetch the progress sum for the calculated period
+        # 2. Calculate the correct start and end dates for the period
+        week_start = 'sunday' if get_week_start_day() == 0 else 'monday'
+        start_date = calculate_start_date(period, start_day_str=week_start, reference_date=date)
+        end_date = calculate_end_date(period, start_date)
+        
+        if not start_date or not end_date:
+            current_app.logger.error(f"Invalid period '{period}' for habit {habit_id}")
+            return None
+
+        # 3. Calculate progress by summing all values in the period
         start_str = start_date.isoformat()
         end_str = end_date.isoformat()
         progress_result = run_query(FETCH_CUMULATIVE_SO_FAR, params=(habit_id, start_str, end_str), fetch='one')
+        
         # Handle NULL from SUM() when no rows exist
         progress = progress_result[0] if progress_result and progress_result[0] is not None else 0
 
-        # 4. Perform the comparison - ensure both are numbers
+        # 4. Ensure both values are numbers and calculate completion
         try:
             progress_num = float(progress) if progress is not None else 0.0
             goal_num = float(goal) if goal is not None else 0.0
             is_complete = progress_num >= goal_num
         except (ValueError, TypeError) as e:
-            current_app.logger.error(f"Comparison error for habit {habit_id}: progress={progress}, goal={goal}, error={e}")
+            current_app.logger.error(f"Conversion error for habit {habit_id}: progress={progress}, goal={goal}, error={e}")
             return None
 
         # Return the result
@@ -73,6 +75,7 @@ def get_cumulative_progress_details(habit_id):
             "period": period,
             "is_complete": is_complete
         }
+        
     except Exception as e:
         current_app.logger.error(f"Error calculating cumulative progress for habit {habit_id}: {e}")
         return None
@@ -118,52 +121,88 @@ def _check_sequence_preconditions(habit_id, date):
     return None
 
 
-def _persist_habit_history(habit_id, date, completed, value, habit_type, cumulative):
-    """
-    Handles the database logic for inserting, updating, or deleting a habit history entry.
-    """
-    if habit_type in ("counter", "cumulative", "total") or cumulative:
-        if completed == 0:
-            # When unchecking counter/cumulative habits, delete the history entry
-            run_query(DEL_HISTORY_BY_DATE, params=(habit_id, date))
-        elif value > 0:
-            # For counter/cumulative habits, always check if entry exists first to avoid duplicates
-            existing_entry = run_query(FETCH_HABIT_HISTORY_ENTRY, params=(habit_id, date), fetch='one')
-            if existing_entry:
-                # Update existing entry with new value
-                run_query(UPDATE_HABIT_HISTORY_ENTRY, params=(1, value, habit_id, date))
-            else:
-                # Create new entry
-                run_query(MAKE_CONTRIBUTION, params=(habit_id, date, 1, value))
-    else:  # Binary habits
-        existing_entry = run_query(FETCH_HABIT_HISTORY_ENTRY, params=(habit_id, date), fetch='one')
-        if existing_entry:
-            run_query(UPDATE_HABIT_HISTORY_ENTRY, params=(completed, value, habit_id, date))
-        else:
-            run_query(MAKE_CONTRIBUTION, params=(habit_id, date, completed, value))
-
-    return {"message": "Habit completion status updated"}, 200
-
-
 def update_habit_completion_status(habit_id, date, completed, value):
     """
-    Orchestrates updating a habit's completion status, including checking preconditions.
+    Updates a habit's completion status for a specific date.
+    Handles both cumulative and non-cumulative habits.
     """
-    # 1. Check business rule preconditions
+    # 1. Check business rule preconditions (sequence ordering)
     precondition_failure = _check_sequence_preconditions(habit_id, date)
     if precondition_failure:
         return precondition_failure
 
-    # 2. Fetch necessary data
+    # 2. Fetch habit details
     habit_details = run_query(FETCH_TYPE_AND_CUMULATIVE, params=(habit_id,), fetch='one')
-    habit_type = habit_details['type'] if habit_details else get_default_habit_type()
+    if not habit_details:
+        return {"error": "Habit not found"}, 404
+        
+    habit_type = habit_details['type']
+    is_cumulative_habit = habit_details['cumulative_goal'] is not None
 
-    cumulative = habit_details['cumulative'] if habit_details else 0
+    # 3. Handle cumulative vs non-cumulative habits
+    if is_cumulative_habit:
+        return _handle_cumulative_habit_update(habit_id, date, value)
+    else:
+        return _handle_regular_habit_update(habit_id, date, completed, value, habit_type)
 
-    # 3. Persist the changes
-    result, status_code = _persist_habit_history(habit_id, date, completed, value, habit_type, cumulative)
 
-    return result, status_code
+def _handle_cumulative_habit_update(habit_id, date, value):
+    """
+    Handles updates for cumulative habits.
+    For cumulative habits, we store incremental values but don't mark as completed.
+    Completion is determined by the cumulative progress vs goal.
+    """
+    try:
+        # Check if there's already an entry for this date
+        existing_entry = run_query(FETCH_HABIT_HISTORY_ENTRY, params=(habit_id, date), fetch='one')
+        
+        if existing_entry:
+            # Update existing entry by adding the new value
+            current_value = existing_entry['value'] or 0
+            new_total = current_value + value
+            
+            if new_total <= 0:
+                # If total becomes zero or negative, delete the entry
+                run_query(DEL_HISTORY_BY_DATE, params=(habit_id, date))
+            else:
+                # For cumulative habits, completion is determined by overall progress
+                run_query(UPDATE_HABIT_HISTORY_ENTRY, params=(0, new_total, habit_id, date))
+        else:
+            # Create new entry only if value is positive
+            if value > 0:
+                run_query(MAKE_CONTRIBUTION, params=(habit_id, date, 0, value))
+            # If value is negative or zero and no existing entry, do nothing
+        
+        return {"message": "Cumulative habit updated successfully"}, 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Error updating cumulative habit {habit_id}: {e}")
+        return {"error": "Failed to update cumulative habit"}, 500
+
+
+def _handle_regular_habit_update(habit_id, date, completed, value, habit_type):
+    """
+    Handles updates for regular (non-cumulative) habits.
+    """
+    try:
+        existing_entry = run_query(FETCH_HABIT_HISTORY_ENTRY, params=(habit_id, date), fetch='one')
+        
+        if completed == 0:
+            # Unchecking - delete the history entry if it exists
+            if existing_entry:
+                run_query(DEL_HISTORY_BY_DATE, params=(habit_id, date))
+        else:
+            # Checking - create or update the entry
+            if existing_entry:
+                run_query(UPDATE_HABIT_HISTORY_ENTRY, params=(completed, value, habit_id, date))
+            else:
+                run_query(MAKE_CONTRIBUTION, params=(habit_id, date, completed, value))
+        
+        return {"message": "Habit completion updated successfully"}, 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Error updating regular habit {habit_id}: {e}")
+        return {"error": "Failed to update habit completion"}, 500
 
 
 def _read_and_prepare_update_data(habit_id, update_payload):
@@ -282,7 +321,8 @@ def _get_habit_progress_for_date(habit_row, date):
     """
     progress = {'completed': False, 'value': 0}
     habit_type = habit_row['type']
-    is_cumulative = habit_row['cumulative']
+    # UNIFIED DEFINITION: Check if habit is cumulative based on cumulative_goal
+    is_cumulative = habit_row['cumulative_goal'] is not None
     habit_id = habit_row['id']
 
     if habit_type == "reverse_binary":
@@ -295,12 +335,34 @@ def _get_habit_progress_for_date(habit_row, date):
             progress['completed'] = bool(history_row['completed'])
         progress['value'] = 1 if progress['completed'] else 0
 
-    elif habit_type in ("counter", "entry") or is_cumulative:
+    elif habit_type in ("counter", "entry"):
         sum_result = run_query(FETCH_SUM_SO_FAR, params=(habit_id, date), fetch='one')
         value = sum_result[0] if sum_result and sum_result[0] is not None else 0
         target = float(habit_row['target_value'] or 1.0)
         progress['value'] = value
         progress['completed'] = value >= target
+
+    elif is_cumulative:
+        # For cumulative habits, calculate progress within the time period (weekly/monthly/yearly)
+        try:
+            # Get cumulative progress details for the current period
+            cumulative_details = get_cumulative_progress_details(habit_id)
+            if cumulative_details:
+                progress['value'] = cumulative_details['progress']
+                progress['completed'] = cumulative_details['is_complete']
+            else:
+                # Fallback: treat as regular counter if cumulative details unavailable
+                sum_result = run_query(FETCH_SUM_SO_FAR, params=(habit_id, date), fetch='one')
+                value = sum_result[0] if sum_result and sum_result[0] is not None else 0
+                progress['value'] = value
+                progress['completed'] = False  # Can't determine completion without goal
+        except Exception as e:
+            current_app.logger.error(f"Error calculating cumulative progress for habit {habit_id}: {e}")
+            # Fallback to simple sum
+            sum_result = run_query(FETCH_SUM_SO_FAR, params=(habit_id, date), fetch='one')
+            value = sum_result[0] if sum_result and sum_result[0] is not None else 0
+            progress['value'] = value
+            progress['completed'] = False
 
     else:  # Standard binary habit
         history_row = run_query(FETCH_COMPLETION, params=(habit_id, date), fetch='one')
@@ -384,11 +446,12 @@ def finish_pomodoro_session(session_id, time_finished, completed, time_completed
     run_query(FINISH_POMODORO_SESSION, (time_finished, completed, duration_minutes, session_id))
 
 
-def get_pomodoro_stats(range_type, start=None):
+def get_pomodoro_stats(range_type, start=None, week_start_day=None):
     """
     Returns pomodoro stats for a given range_type and start date.
     range_type: 'day', 'week', 'month', or 'all'
     start: ISO date string (YYYY-MM-DD) for 'day' and 'week', or 'YYYY-MM' for 'month'.
+    week_start_day: 0=Sunday, 1=Monday
     """
     # Always interpret the 'start' date as local time, but filter using the local date derived from UTC timestamps
     if range_type == 'day':
@@ -400,7 +463,12 @@ def get_pomodoro_stats(range_type, start=None):
             start_date = datetime.strptime(start, '%Y-%m-%d')
         else:
             today = datetime.now()
-            start_date = today - timedelta(days=today.weekday())  # Monday as start of week
+            # Use week_start_day parameter if provided, otherwise get from settings
+            if week_start_day is None:
+                week_start_day = get_week_start_day()
+            # Calculate start of week based on week_start_day
+            days_since_week_start = (today.weekday() + 1) % 7 if week_start_day == 0 else today.weekday()
+            start_date = today - timedelta(days=days_since_week_start)
         end_date = start_date + timedelta(days=6)
         # Filter using local date range
         x = run_query(POM_TIMER_CALC3, (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
@@ -429,13 +497,17 @@ def get_pom_day_streak():
     return streak
 
 
-def get_pom_week_streak():
+def get_pom_week_streak(week_start_day=None):
+    if week_start_day is None:
+        week_start_day = get_week_start_day()
+    
     rows = run_query(FETCH_WEEK_STREAK, fetch="all")
     weeks = set(row['w'] for row in rows)
     now = datetime.now()
     current = now
     streak = 0
     while True:
+        # Calculate week number based on week_start_day setting
         # Use strftime for consistency with the database query
         week_str = current.strftime('%Y-%W')
         if week_str in weeks:

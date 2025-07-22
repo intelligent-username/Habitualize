@@ -8,6 +8,8 @@ copies/
 *.pyc
 *.pyo
 *test*
+*debug*
+*check*
 
 logs
 *.log

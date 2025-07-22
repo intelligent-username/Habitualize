@@ -4,21 +4,11 @@
  */
 
 import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from 'date-fns';
+import { getWeekStartDay } from './timeHelpers';
 
 // Constants
 const MIN_DAYS_FOR_MONTHLY = 10;
 const MS_TO_SECONDS = 1000;
-
-// Global week start day setting - will be set by importing modules
-let weekStartDay = 0; // Default to Sunday
-
-/**
- * Set the week start day for this module
- * @param {number} day - Day of week (0=Sunday, 1=Monday, etc.)
- */
-export function setWeekStartDay(day) {
-    weekStartDay = day;
-}
 
 /**
  * Processes raw weekly pomodoro stats for chart display
@@ -27,16 +17,27 @@ export function setWeekStartDay(day) {
  * @returns {Array} Array of objects with date, label, and timeWorked
  */
 export function processWeeklyData(pomodoroStats, weekStart) {
-  const weekEnd = endOfWeek(weekStart, { weekStartsOn: weekStartDay });
-  const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
+  const currentWeekStartDay = getWeekStartDay();
+  
+  // Always recalculate the proper week start for the current setting
+  const properWeekStart = startOfWeek(weekStart, { weekStartsOn: currentWeekStartDay });
+  const properWeekEnd = endOfWeek(properWeekStart, { weekStartsOn: currentWeekStartDay });
+  const daysInWeek = eachDayOfInterval({ start: properWeekStart, end: properWeekEnd });
 
   const timeByDate = buildTimeByDateMap(pomodoroStats);
+  
+  const result = daysInWeek.map(day => {
+    const dateKey = format(day, 'yyyy-MM-dd');
+    const timeWorked = timeByDate[dateKey] || 0;
+    
+    return {
+      date: day,
+      label: format(day, 'EEE'),
+      timeWorked: timeWorked
+    };
+  });
 
-  return daysInWeek.map(day => ({
-    date: day, // Pass Date object directly
-    label: format(day, 'EEE'), // Mon, Tue, etc.
-    timeWorked: timeByDate[format(day, 'yyyy-MM-dd')] || 0
-  }));
+  return result;
 }
 
 /**
@@ -70,10 +71,11 @@ function buildTimeByDateMap(pomodoroStats) {
   const timeByDate = {};
   
   pomodoroStats?.forEach(session => {
-    if (session.time_completed) { // Include partial sessions
+    // Include ALL sessions that have a numeric time_completed value (including 0)
+    if (session.time_completed !== null && session.time_completed !== undefined) {
       // Always convert UTC to local date string for grouping
       const localDate = new Date(session.time_started);
-      const dateString = localDate.getFullYear() + '-' + String(localDate.getMonth() + 1).padStart(2, '0') + '-' + String(localDate.getDate()).padStart(2, '0');
+      const dateString = format(localDate, 'yyyy-MM-dd');
       timeByDate[dateString] = (timeByDate[dateString] || 0) + parseFloat(session.time_completed);
     }
   });

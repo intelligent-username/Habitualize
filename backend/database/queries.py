@@ -1,7 +1,8 @@
 "A collection of (reusable) queries for app.py."
-
-# FETCHING (SELECT) queries
-# --------------------------
+# ---------------------------------------------
+# ------------------------------------
+#     FETCHING (SELECT) queries
+# ------------------------------------
 FETCH_HABITS_BY_SEQUENCE_ID = """
         SELECT id, sequence_id, step_order, name, type, target_value,
         date_created, cumulative, cumulative_goal, cumulative_period, icon
@@ -27,7 +28,7 @@ FETCH_ALL_CATEGORIES = "SELECT id, name FROM categories ORDER BY id ASC"
 
 FETCH_HAB = "SELECT id FROM habits WHERE sequence_id = ?"
 
-FETCH_HABIT_HISTORY_ENTRY = "SELECT id FROM habit_history WHERE habit_id = ? AND date = ?"
+FETCH_HABIT_HISTORY_ENTRY = "SELECT id, value FROM habit_history WHERE habit_id = ? AND date = ?"
 
 FETCH_SEQ_HAB = "SELECT id FROM habits WHERE sequence_id = ? AND step_order = ?"
 
@@ -43,7 +44,7 @@ FETCH_SUM_SO_FAR  = "SELECT SUM(value) FROM habit_history WHERE habit_id = ? AND
 
 FETCH_CUMULATIVE_SO_FAR = "SELECT SUM(value) FROM habit_history WHERE habit_id = ? AND date >= ? AND date <= ?"
 
-FETCH_TYPE_AND_CUMULATIVE = "SELECT type, cumulative FROM habits WHERE id = ?"
+FETCH_TYPE_AND_CUMULATIVE = "SELECT type, cumulative, cumulative_goal FROM habits WHERE id = ?"
 
 FETCH_HABIT_GOAL_DETAILS = "SELECT cumulative_goal, cumulative_period FROM habits WHERE id = ?"
 
@@ -81,8 +82,10 @@ POM_TIMER_CALC3 = "SELECT * FROM pomodoro_sessions WHERE date(datetime(time_star
 
 FETCH_POM_LOC = "SELECT * FROM pomodoro_sessions WHERE strftime('%Y-%m', datetime(time_started, 'localtime')) = ?"
 
+# ---------------------------------------------
+# ------------------------------------
 # MAKE (INSERT) queries
-# -------------------------- 
+# ------------------------------------
 MAKE_HABIT = """
 INSERT INTO habits (
     sequence_id, step_order, name, type, target_value, 
@@ -100,8 +103,88 @@ MAKE_POMODORO_SESSION = "INSERT INTO pomodoro_sessions (goal_duration_minutes, t
 
 MAKE_SETT = "INSERT INTO user_settings (setting_key, setting_value, setting_type) VALUES (?, ?, ?)"
 
-# DELETE queries
-# --------------------------
+GET_COMPLETIONS_TREND_DAILY = """
+    SELECT DATE(h.date) as period, COUNT(*) as count
+    FROM habit_history h
+    JOIN habits hab ON h.habit_id = hab.id
+    WHERE h.completed = 1 AND h.date BETWEEN ? AND ?
+    AND (
+        (hab.type IN ('binary', 'reverse_binary', 'timer', 'entry') AND h.completed = 1)
+        OR (hab.type = 'counter' AND h.value >= hab.target_value AND h.completed = 1)
+    )
+    GROUP BY DATE(h.date)
+    ORDER BY DATE(h.date)
+"""
+
+GET_COMPLETIONS_TREND_WEEKLY = """
+    SELECT strftime('%Y-W%W', h.date) as period, COUNT(*) as count
+    FROM habit_history h
+    JOIN habits hab ON h.habit_id = hab.id
+    WHERE h.completed = 1 AND h.date BETWEEN ? AND ?
+    AND (
+        (hab.type IN ('binary', 'reverse_binary', 'timer', 'entry') AND h.completed = 1)
+        OR (hab.type = 'counter' AND h.value >= hab.target_value AND h.completed = 1)
+    )
+    GROUP BY strftime('%Y-W%W', h.date)
+    ORDER BY strftime('%Y-W%W', h.date)
+"""
+
+GET_COMPLETIONS_TREND_MONTHLY = """
+    SELECT strftime('%Y-%m', h.date) as period, COUNT(*) as count
+    FROM habit_history h
+    JOIN habits hab ON h.habit_id = hab.id
+    WHERE h.completed = 1 AND h.date BETWEEN ? AND ?
+    AND (
+        (hab.type IN ('binary', 'reverse_binary', 'timer', 'entry') AND h.completed = 1)
+        OR (hab.type = 'counter' AND h.value >= hab.target_value AND h.completed = 1)
+    )
+    GROUP BY strftime('%Y-%m', h.date)
+    ORDER BY strftime('%Y-%m', h.date)
+"""
+
+GET_HABIT_CONSISTENCY = """
+SELECT 
+    h.id,
+    h.name,
+    h.type,
+    h.target_value,
+    h.cumulative,
+    h.cumulative_goal,
+    s.name as sequence_name,
+    c.name as category_name,
+    (SELECT COUNT(*) FROM habits h2 WHERE h2.sequence_id = h.sequence_id) as sequence_habit_count,
+    MIN(CASE WHEN hh.completed = 1 THEN hh.date END) as first_completed_date,
+    MAX(hh.date) as last_tracked_date,
+    COUNT(DISTINCT CASE WHEN hh.completed = 1 THEN hh.date END) as completed_days
+FROM habits h
+LEFT JOIN habit_history hh ON h.id = hh.habit_id
+LEFT JOIN sequences s ON h.sequence_id = s.id
+LEFT JOIN categories c ON s.category_id = c.id
+GROUP BY h.id, h.name, h.type, h.target_value, h.cumulative, h.cumulative_goal, s.name, c.name
+HAVING MIN(CASE WHEN hh.completed = 1 THEN hh.date END) IS NOT NULL
+ORDER BY c.name, s.name, h.name
+"""
+
+GET_HABIT_DETAILS = """
+SELECT h.name, h.type, s.name as category
+FROM habits h
+LEFT JOIN sequences s ON h.sequence_id = s.id
+WHERE h.id = ?
+"""
+
+GET_HABIT_DETAILS_STATS = """
+SELECT 
+    COUNT(DISTINCT CASE WHEN hh.completed = 1 THEN hh.date END) as completed_days,
+    MIN(CASE WHEN hh.completed = 1 THEN hh.date END) as first_completed,
+    MAX(hh.date) as last_tracked
+FROM habit_history hh
+WHERE hh.habit_id = ?
+"""
+
+# ---------------------------------------------
+# ------------------------------------
+#          DELETE queries
+# ------------------------------------
 DEL_HISTORY = "DELETE FROM habit_history WHERE habit_id = ?"
 
 DEL_HISTORY_BY_DATE = "DELETE FROM habit_history WHERE habit_id = ? AND date = ?"
@@ -114,8 +197,10 @@ DEL_SEQ = "DELETE FROM sequences WHERE id = ?"
 
 DEL_CAT = "DELETE FROM categories WHERE id = ?"
 
+# ---------------------------------------------
+# ------------------------------------
 # UPDATE queries
-# --------------------------
+# ------------------------------------
 UPDATE_HABIT = """UPDATE habits 
         SET name = ?, type = ?, target_value = ?, cumulative = ?, 
             cumulative_goal = ?, cumulative_period = ?, sequence_id = ?, step_order = ?, icon = ?
@@ -130,7 +215,6 @@ UPDATE_SEQ = "UPDATE sequences SET name = ?, color = ?, category_id = ? WHERE id
 
 UPDATE_HAB_CATS = "UPDATE sequences SET category_id = ? WHERE category_id = ?" 
     # When a category is deleted, move all habits that were WITHIN that category to the default category
-    # First parameter: new default category ID, Second parameter: old category ID to replace
 
 FINISH_POMODORO_SESSION = "UPDATE pomodoro_sessions SET time_finished = ?, completed = ?, time_completed = ? WHERE id = ?"
 
@@ -147,3 +231,4 @@ UPDATE_SEQ = """
                 category_id = COALESCE(:category_id, category_id)
         WHERE id = :sequence_id
 """
+

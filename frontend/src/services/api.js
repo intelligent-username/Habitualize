@@ -1,3 +1,4 @@
+
 /**
  * API service for Habitualize backend communication
  * Centralizes all HTTP requests to the Flask backend
@@ -133,8 +134,11 @@ class ApiService {
     }
 
     // Cumulative Progress for Habits
-    async getCumulativeProgress(habitId) {
-        return this.request(`/habits/${habitId}/cumulative-progress`);
+    async getCumulativeProgress(habitId, date = null) {
+        const endpoint = date 
+            ? `/habits/${habitId}/cumulative-progress?date=${date}`
+            : `/habits/${habitId}/cumulative-progress`;
+        return this.request(endpoint);
     }
 
     // Pomodoro Section
@@ -150,9 +154,10 @@ class ApiService {
             body: JSON.stringify({ session_id, time_finished: new Date().toISOString(), completed, time_completed })
         });
     }
-    async getPomodoroStats(range = 'day', start = null) {
+    async getPomodoroStats(range = 'day', start = null, weekStartDay = null) {
         let url = `/api/pomodoro/stats?range=${range}`;
         if (start) url += `&start=${start}`;
+        if (weekStartDay !== null) url += `&week_start_day=${weekStartDay}`;
         return this.request(url);
     }
 
@@ -160,8 +165,10 @@ class ApiService {
         return this.request('/api/pomodoro/earliest');
     }
 
-    async getPomodoroStreaks() {
-        return this.request('/api/pomodoro/streaks');
+    async getPomodoroStreaks(weekStartDay = null) {
+        let url = '/api/pomodoro/streaks';
+        if (weekStartDay !== null) url += `?week_start_day=${weekStartDay}`;
+        return this.request(url);
     }
 
     // QotD
@@ -256,6 +263,27 @@ class ApiService {
             throw error;
         }
     }
-}
 
+    // Settings: Get week_start_day only
+    async getWeekStartDay() {
+        const result = await this.request('/settings/week_start_day');
+        return result.week_start_day;
+    }
+
+    // Analytics Operations Section
+    async getCompletionsTrend(period = 'daily', startDate = null, endDate = null) {
+        let url = `/analytics/completions?period=${period}`;
+        if (startDate) url += `&start=${startDate}`;
+        if (endDate) url += `&end=${endDate}`;
+        return this.request(url);
+    }
+
+    async getHabitConsistency() {
+        return this.request('/analytics/habit-consistency');
+    }
+
+    async getHabitDetails(habitId) {
+        return this.request(`/analytics/habit-consistency/${habitId}`);
+    }
+}
 export default new ApiService();

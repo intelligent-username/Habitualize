@@ -17,7 +17,6 @@ const AppearanceSection = ({ formData, handleInputChange }) => {
               className={`toggle-switch theme-toggle ${formData.theme === 'light' ? 'toggled-on' : ''}`}
               onClick={() => {
                 const newTheme = formData.theme === 'light' ? 'dark' : 'light';
-                console.log(`[AppearanceSection] theme toggle clicked - current: ${formData.theme}, will change to: ${newTheme}`);
                 handleInputChange('theme', newTheme);
               }}
             >
@@ -36,7 +35,6 @@ const AppearanceSection = ({ formData, handleInputChange }) => {
             <div
               className={`toggle-switch appearance-toggle ${formData.showHabitIcons ? 'toggled-on' : ''}`}
               onClick={() => {
-                console.log(`[AppearanceSection] showHabitIcons toggle clicked - current: ${formData.showHabitIcons}, will change to: ${!formData.showHabitIcons}`);
                 handleInputChange('showHabitIcons', !formData.showHabitIcons);
               }}
               role="button"
@@ -58,7 +56,6 @@ const AppearanceSection = ({ formData, handleInputChange }) => {
             <div
               className={`toggle-switch appearance-toggle ${formData.filterCompletedToBottom ? 'toggled-on' : ''}`}
               onClick={() => {
-                console.log(`[AppearanceSection] filterCompletedToBottom toggle clicked - current: ${formData.filterCompletedToBottom}, will change to: ${!formData.filterCompletedToBottom}`);
                 handleInputChange('filterCompletedToBottom', !formData.filterCompletedToBottom);
               }}
               role="button"

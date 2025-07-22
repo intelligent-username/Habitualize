@@ -9,8 +9,27 @@ import { format, startOfWeek, parseISO, addDays, subDays } from 'date-fns';
 const DAYS_IN_WEEK = 7;
 const MS_TO_SECONDS = 1000;
 
+
 // Global week start day setting - will be set by importing modules
-let weekStartDay = 0; // Default to Sunday
+import ApiService from '../services/api';
+let weekStartDay = 1; // Default to Monday
+let weekStartDayPromise = null;
+
+/**
+ * Initialize week start day from backend
+ * @returns {Promise<number>} Promise that resolves to the week start day
+ */
+export function initializeWeekStartDay() {
+    if (!weekStartDayPromise) {
+        weekStartDayPromise = ApiService.getWeekStartDay().then(day => {
+            setWeekStartDay(day);
+            return day;
+        }).catch(() => {
+            return 0; // Default to Sunday on error
+        });
+    }
+    return weekStartDayPromise;
+}
 
 /**
  * Set the week start day for this module
@@ -18,6 +37,14 @@ let weekStartDay = 0; // Default to Sunday
  */
 export function setWeekStartDay(day) {
     weekStartDay = day;
+}
+
+/**
+ * Get the current week start day
+ * @returns {number} - Current week start day (0=Sunday, 1=Monday, etc.)
+ */
+export function getWeekStartDay() {
+    return weekStartDay;
 }
 
 /**
@@ -49,7 +76,10 @@ export function getLocalDateString(date) {
 export function getStartOfWeek(date) {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - d.getDay());
+    // Calculate days to subtract based on weekStartDay setting
+    const dayOfWeek = d.getDay();
+    const daysToSubtract = (dayOfWeek - weekStartDay + 7) % 7;
+    d.setDate(d.getDate() - daysToSubtract);
     return d;
 }
 

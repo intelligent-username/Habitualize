@@ -7,7 +7,7 @@ import { useSettings } from "../../hooks/useSettings.js";
 
 // Universal Component for displaying & interacting w/ individual habits
 
-export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabled }) => {
+export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabled, viewedDate }) => {
     const colorHex = COLOR_OPTIONS.find(opt => opt.value === habit.color)?.hex || "#b0b0b0";
     const textColor = "#fff";
     const { getShowHabitIcons } = useSettings();
@@ -108,12 +108,19 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
     }
 
     // Cumulative habit display and input logic
-    const isCumulative = habit.cumulative === 1 || habit.cumulative === true;
+    // UNIFIED DEFINITION: A habit is cumulative if it has a cumulative_goal set
+    const isCumulative = habit.cumulative_goal != null;
+    
+    // Always call the hook, but only enable it for cumulative habits
+    const { data: progressData, isLoading: progressLoading, error: progressError } = useCumulativeProgress(
+        isCumulative ? habit.id : null,
+        viewedDate
+    );
+    
     let cumulativeControls = null;
     let isCompleted = habit.completed;
 
     if (isCumulative) {
-        const { data: progressData, isLoading: progressLoading, error: progressError } = useCumulativeProgress(habit.id);
         if (progressLoading) {
             cumulativeControls = <span className="cumulative-progress">Loading...</span>;
         } else if (progressError) {
@@ -121,13 +128,17 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
         } else if (progressData) {
             const { progress, goal, period, is_complete } = progressData;
             const percent = Math.min(100, (progress / goal) * 100);
+            const isLoading = progressLoading;
             isCompleted = is_complete;
             cumulativeControls = (
                 <div className="cumulative-progress-bar" style={{ width: '100%' }}>
                     <button
                         className="cumulative-counter-btn"
-                        onClick={() => { if (progress > 0) { toggleCompletion(habit.id, false, -1); } }}
-                        disabled={progress <= 0}
+                        onClick={() => {
+                            console.log('Decrement clicked for habit', habit.id, 'removing 1 from current progress:', progress);
+                            toggleCompletion(habit.id, true, -1);
+                        }}
+                        disabled={isLoading || progress <= 0}
                         title="Remove 1"
                         aria-label="Remove 1"
                     >
@@ -148,8 +159,11 @@ export const HabitItem = ({ habit, toggleCompletion, deleteHabit, onEdit, disabl
                     </div>
                     <button
                         className="cumulative-counter-btn"
-                        onClick={() => toggleCompletion(habit.id, false, 1)}
-                        disabled={progress >= goal}
+                        onClick={() => {
+                            console.log('Increment clicked for habit', habit.id, 'adding 1 to current progress:', progress);
+                            toggleCompletion(habit.id, true, 1);
+                        }}
+                        disabled={isLoading || progress >= goal}
                         title="Add 1"
                         aria-label="Add 1"
                     >

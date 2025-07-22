@@ -1,19 +1,27 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { startOfWeek, parseISO, addDays, subDays } from "date-fns";
-import { getLocalDateString } from "../utils/timeHelpers";
+import { getLocalDateString, initializeWeekStartDay } from "../utils/timeHelpers";
 
 const UIContext = createContext();
 
 export const UIProvider = ({ children }) => {
   const [selectedDate, setSelectedDate] = useState(() => getLocalDateString(new Date()));
   const [showMonthView, setShowMonthView] = useState(false);
-  const [currentWeekStart, setCurrentWeekStart] = useState(() =>
-    startOfWeek(new Date(), { weekStartsOn: 0 })
-  );
+  const [weekStartDay, setWeekStartDay] = useState(1); // Default to Monday
+  const [currentWeekStart, setCurrentWeekStart] = useState(null); // Initialize as null
+
+  // Initialize week start day from backend
+  useEffect(() => {
+    initializeWeekStartDay().then(day => {
+      setWeekStartDay(day);
+      // Set initial week start only after we have the correct week start day
+      setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: day }));
+    });
+  }, []);
 
   useEffect(() => {
-    setCurrentWeekStart(startOfWeek(parseISO(selectedDate), { weekStartsOn: 0 }));
-  }, [selectedDate]);
+    setCurrentWeekStart(startOfWeek(parseISO(selectedDate), { weekStartsOn: weekStartDay }));
+  }, [selectedDate, weekStartDay]);
 
   const handleSelectDate = (date) => setSelectedDate(getLocalDateString(date));
   const handlePrevWeek = () => setSelectedDate(getLocalDateString(subDays(parseISO(selectedDate), 7)));

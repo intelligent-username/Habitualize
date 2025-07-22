@@ -23,7 +23,7 @@ export function usePomodoroChartConfig(data, viewType, onPointClick) {
       }
     ]
   };
-
+  
   const options = {
     responsive: true,
     maintainAspectRatio: false,

@@ -91,7 +91,7 @@ export class NotificationManager {
       
       if (nextHour >= startHour && nextHour <= endHour) {
         const timeoutId = setTimeout(() => {
-          this.showNotification('Remember to check your habits!', {
+          this.showNotification('Reminder to check your habits', {
             body: 'Take a moment to update your habit progress.',
           });
           scheduleNext(); // Schedule the next one
@@ -147,7 +147,7 @@ export class NotificationManager {
       const timeUntilNotification = scheduledTime.getTime() - now.getTime();
       
       const timeoutId = setTimeout(() => {
-        this.showNotification('Remember to check your habits!', {
+        this.showNotification('Check your habits!', {
           body: 'Time for your habit check-in!',
         });
         

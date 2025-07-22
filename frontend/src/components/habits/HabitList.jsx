@@ -16,7 +16,8 @@ const HabitList = ({
   onEditHabit,
   onEditSequence,
   onDeleteSequence,
-  selectedCategoryId
+  selectedCategoryId,
+  viewedDate
 }) => {
   const { getFilterCompletedToBottom } = useSettings();
   const filterCompletedToBottom = getFilterCompletedToBottom();
@@ -58,6 +59,7 @@ const HabitList = ({
             toggleCompletion={onToggleCompletion}
             deleteHabit={habit => onDeleteHabit(habit, seq)}
             onEdit={onEditHabit}
+            viewedDate={viewedDate}
           />
         ) : (
           <SequenceGroup
@@ -68,6 +70,7 @@ const HabitList = ({
             onEditHabit={onEditHabit}
             onDeleteHabit={onDeleteHabit}
             onToggleCompletion={onToggleCompletion}
+            viewedDate={viewedDate}
           />
         )
       )}

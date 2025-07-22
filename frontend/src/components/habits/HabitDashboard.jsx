@@ -14,7 +14,6 @@ const HabitDashboard = ({ selectedDate, selectedCategoryId }) => {
     // --- Data Hooks ---
     const {
         sequences,
-        loading: sequencesLoading,
         error: sequencesError,
         deleteSequence,
     } = useSequences(selectedDate);
@@ -80,6 +79,7 @@ const HabitDashboard = ({ selectedDate, selectedCategoryId }) => {
                 onEditSequence={handleEditSequence}
                 onDeleteSequence={handleDeleteSequence}
                 selectedCategoryId={selectedCategoryId}
+                viewedDate={selectedDate}
             />
             <button onClick={() => {
                 setShowHabitForm(true);
@@ -99,7 +99,6 @@ const HabitDashboard = ({ selectedDate, selectedCategoryId }) => {
                     />
                 </Modal>
             )}
-            {sequencesLoading && <div>Loading sequences...</div>}
             {sequencesError && <div style={{color: 'red'}}>Error loading sequences: {sequencesError}</div>}
             {habitsError && <div style={{color: 'red'}}>Habit error: {habitsError}</div>}
         </>

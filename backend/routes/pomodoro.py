@@ -36,7 +36,8 @@ def finish_pomodoro():
 def pomodoro_stats():
     range_type = request.args.get('range', 'day')
     start = request.args.get('start', None)
-    stats = get_pomodoro_stats(range_type, start)
+    week_start_day = request.args.get('week_start_day', None)
+    stats = get_pomodoro_stats(range_type, start, week_start_day)
     return jsonify(stats)
 
 
@@ -49,8 +50,8 @@ def get_earliest_pomodoro_date():
 
 @pomodoro_bp.route('/api/pomodoro/streaks', methods=['GET'])
 def get_pomodoro_streaks():
-    from services.services import get_pom_day_streak, get_pom_week_streak
+    week_start_day = request.args.get('week_start_day', None)
     return jsonify({
         'current_day_streak': get_pom_day_streak(),
-        'current_week_streak': get_pom_week_streak()
+        'current_week_streak': get_pom_week_streak(week_start_day)
     })

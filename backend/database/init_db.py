@@ -13,6 +13,7 @@ def init_db():
     path = current_app.config['DATABASE']
     conn = sqlite3.connect(path)
     c = conn.cursor()
+
     # Categories table
     c.execute('''
         CREATE TABLE IF NOT EXISTS categories (
@@ -21,6 +22,7 @@ def init_db():
         )
     ''')
     c.execute("INSERT OR IGNORE INTO categories (id, name) VALUES (1, 'default')")
+
     # Sequences table
     c.execute('''
         CREATE TABLE IF NOT EXISTS sequences (
@@ -32,6 +34,7 @@ def init_db():
             FOREIGN KEY (category_id) REFERENCES categories(id)
         )
     ''')
+
     # Habits table (steps in a sequence, or single habits)
     c.execute('''
         CREATE TABLE IF NOT EXISTS habits (
@@ -49,6 +52,7 @@ def init_db():
             FOREIGN KEY (sequence_id) REFERENCES sequences(id)
         )
     ''')
+
     # Habit history table
     c.execute('''
         CREATE TABLE IF NOT EXISTS habit_history (

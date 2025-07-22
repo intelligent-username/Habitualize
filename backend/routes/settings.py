@@ -95,3 +95,9 @@ def update_settings():
         SettingsService.set_setting(db_key, value, setting_type)
     
     return jsonify({"message": "Settings updated successfully"})
+
+@settings_bp.route('/week_start_day', methods=['GET'])
+def get_week_start_day_setting():
+    """Get the week_start_day setting only"""
+    value = SettingsService.get_setting('week_start_day')
+    return jsonify({'week_start_day': int(value) if value is not None else 0})

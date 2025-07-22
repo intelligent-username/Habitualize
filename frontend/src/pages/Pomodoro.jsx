@@ -13,15 +13,31 @@ const PomodoroPage = () => {
   const [timerPop, setTimerPop] = useState(false);
 
   const {
-    earliestDate,
+    updateWeekStartDay,
+    setEarliestDate,
     ...navigation
-  } = usePomodoroNavigation(null, isCompact);
+  } = usePomodoroNavigation(isCompact);
 
   const {
     stats, weekStats, monthStats, streaks,
     graphData, isGraphLoading,
-    refreshAllData
+    refreshAllData,
+    earliestDate
   } = usePomodoroData(navigation.dayDate, navigation.weekStart, navigation.monthDate, navigation.graphViewType, navigation.graphWeekStart, navigation.graphMonthDate);
+
+  // When the earliest date is fetched, update the navigation hook
+  useEffect(() => {
+    if (earliestDate) {
+      setEarliestDate(earliestDate);
+    }
+  }, [earliestDate, setEarliestDate]);
+
+  // Add a wrapper function that updates week start day and refreshes all data
+  const handleWeekStartDayChange = (newWeekStartDay) => {
+    updateWeekStartDay(newWeekStartDay);
+    // Force refresh all data after a short delay to ensure state updates have propagated
+    setTimeout(() => refreshAllData(), 50);
+  };
 
   const {
     mode, setMode,
@@ -32,6 +48,8 @@ const PomodoroPage = () => {
     isRunning, isPaused,
     celebrate,
     audioRef,
+    shortBreakAudioRef,
+    longBreakAudioRef,
     startSession, pauseSession, resumeSession, handleStop,
     formatTime,
     MODES
@@ -106,7 +124,9 @@ const PomodoroPage = () => {
       
 
     <div className="page-container">
-      <audio ref={audioRef} src="/ding.mp3" preload="auto" />
+      <audio ref={audioRef} src="/sounds/ding.mp3" preload="auto" />
+      <audio ref={shortBreakAudioRef} src="/sounds/beep.mp3" preload="auto" />
+      <audio ref={longBreakAudioRef} src="/sounds/beep2.mp3" preload="auto" />
       {celebrate && (
         <div className="celebration">
           {[...Array(18)].map((_, i) => (

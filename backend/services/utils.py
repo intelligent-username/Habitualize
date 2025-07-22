@@ -27,20 +27,27 @@ def get_today():
     return datetime.date.today().isoformat()
 
 
-def calculate_start_date(period, start_day_str='sunday'):
+def calculate_start_date(period, start_day_str='sunday', reference_date=None):
     """
-    Calculates the start date for a given period (weekly, monthly, yearly).
+    Calculates the start date for a given period (day, week/weekly, month/monthly).
     The week's start day is customizable.
 
     Args:
-        period (str): The period ('weekly', 'monthly', 'yearly').
+        period (str): The period ('day', 'week', 'weekly', 'month', 'monthly').
         start_day_str (str): The name of the day the week starts on (e.g., 'sunday').
+        reference_date (str or datetime.date): The reference date to calculate from. Defaults to today.
 
     Returns:
         datetime.date: The calculated start date.
         None: If the period is invalid.
     """
-    today = datetime.date.today()
+    if reference_date:
+        if isinstance(reference_date, str):
+            today = datetime.datetime.strptime(reference_date, '%Y-%m-%d').date()
+        else:
+            today = reference_date
+    else:
+        today = datetime.date.today()
 
     def get_weekly_start():
         """Calculates the start of the week based on the configured start day."""
@@ -53,9 +60,11 @@ def calculate_start_date(period, start_day_str='sunday'):
         return today - datetime.timedelta(days=days_to_subtract)
 
     period_actions = {
-        'monthly': lambda: today.replace(day=1),
-        'yearly': lambda: today.replace(month=1, day=1),
-        'weekly': get_weekly_start
+        'day': lambda: today,
+        'week': get_weekly_start,
+        'weekly': get_weekly_start,  # Support old format
+        'month': lambda: today.replace(day=1),
+        'monthly': lambda: today.replace(day=1),  # Support old format
     }
 
     action = period_actions.get(period)
@@ -65,22 +74,22 @@ def calculate_start_date(period, start_day_str='sunday'):
 
 def calculate_end_date(period, start_date):
     """
-    Calculates the end date for a given period (weekly, monthly, yearly).
+    Calculates the end date for a given period (day, week/weekly, month/monthly).
 
     Args:
-        period (str): The period ('weekly', 'monthly', 'yearly').
+        period (str): The period ('day', 'week', 'weekly', 'month', 'monthly').
         start_date (datetime.date): The start date of the period.
 
     Returns:
         datetime.date: The calculated end date.
         None: If the period is invalid.
     """
-    if period == 'weekly':
+    if period == 'day':
+        return start_date  # Same day
+    elif period in ('week', 'weekly'):
         return start_date + datetime.timedelta(days=6)
-    elif period == 'monthly':
+    elif period in ('month', 'monthly'):
         next_month = start_date.replace(day=28) + datetime.timedelta(days=4)  # Go to next month
         return next_month.replace(day=1) - datetime.timedelta(days=1)  # Last day of current month
-    elif period == 'yearly':
-        return start_date.replace(month=12, day=31)
     else:
         return None

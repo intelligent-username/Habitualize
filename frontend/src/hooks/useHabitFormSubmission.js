@@ -187,7 +187,7 @@ export const useHabitFormSubmission = ({
         if (habitKind === "cumulative") {
             handleUpdateHabit({
                 name: newHabit,
-                type: "counter", // ensure type is counter for cumulative
+                type: "binary",
                 cumulative: 1,
                 cumulative_goal: cumulativeGoal,
                 cumulative_period: cumulativePeriod,
@@ -308,9 +308,9 @@ export const useHabitFormSubmission = ({
             name: newHabit,
             color,
             category_id: categoryId,
-            type: "counter", // changed from 'binary' to 'counter'
-            cumulative: 1,
-            cumulative_goal: Number(cumulativeGoal), // ensure number
+            type: "binary", // always use 'binary' for cumulative
+            cumulative: 0, // UNIFIED DEFINITION: cumulative field is not used, only cumulative_goal matters
+            cumulative_goal: Number(cumulativeGoal), // ensure number - this is what makes it cumulative
             cumulative_period: cumulativePeriod,
             icon
         });

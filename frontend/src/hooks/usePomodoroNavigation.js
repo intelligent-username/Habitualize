@@ -1,24 +1,59 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { addDays, subDays, format, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths, getWeek, getWeekYear, isThisYear, isToday, isThisWeek, isThisMonth, differenceInDays } from "date-fns";
+import { getWeekStartDay, setWeekStartDay as setTimeHelpersWeekStartDay } from '../utils/timeHelpers';
 
-// Global week start day setting - will be set from App.jsx
-let weekStartDay = 0; // Default to Sunday
-
-/**
- * Set the week start day for this module
- * @param {number} day - Day of week (0=Sunday, 1=Monday, etc.)
- */
-export function setWeekStartDay(day) {
-    weekStartDay = day;
+export function updateWeekStartDay(newWeekStartDay) {
+  setTimeHelpersWeekStartDay(newWeekStartDay);
 }
 
-export function usePomodoroNavigation(earliestDate, isCompact) {
+export function usePomodoroNavigation(isCompact) {
+  const [weekStartDay, setWeekStartDayState] = useState(getWeekStartDay());
   const [dayDate, setDayDate] = useState(new Date());
-  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: weekStartDay }));
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: getWeekStartDay() }));
   const [monthDate, setMonthDate] = useState(startOfMonth(new Date()));
   const [graphViewType, setGraphViewType] = useState('week');
-  const [graphWeekStart, setGraphWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: weekStartDay }));
+  const [graphWeekStart, setGraphWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: getWeekStartDay() }));
   const [graphMonthDate, setGraphMonthDate] = useState(startOfMonth(new Date()));
+  const [earliestDate, setEarliestDate] = useState(null);
+  const [isWeekStartDayLoaded, setIsWeekStartDayLoaded] = useState(false);
+
+  // CRITICAL FIX: Wait for week start day to be properly loaded from backend
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentWeekStartDay = getWeekStartDay();
+      if (currentWeekStartDay !== weekStartDay || !isWeekStartDayLoaded) {
+        setWeekStartDayState(currentWeekStartDay);
+        setIsWeekStartDayLoaded(true);
+        // Recalculate all week-based dates with the correct week start day
+        const newWeekStart = startOfWeek(new Date(), { weekStartsOn: currentWeekStartDay });
+        const newGraphWeekStart = startOfWeek(new Date(), { weekStartsOn: currentWeekStartDay });
+        setWeekStart(newWeekStart);
+        setGraphWeekStart(newGraphWeekStart);
+        clearInterval(interval);
+      }
+    }, 100); // Check every 100ms until loaded
+
+    // Cleanup after 5 seconds max
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      setIsWeekStartDayLoaded(true);
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [weekStartDay, isWeekStartDayLoaded]);
+
+  const updateWeekStartDayAndRefresh = (newWeekStartDay) => {
+    updateWeekStartDay(newWeekStartDay);
+    setWeekStartDayState(newWeekStartDay);
+    // Immediately update week starts with new setting
+    const newWeekStart = startOfWeek(new Date(), { weekStartsOn: newWeekStartDay });
+    const newGraphWeekStart = startOfWeek(new Date(), { weekStartsOn: newWeekStartDay });
+    setWeekStart(newWeekStart);
+    setGraphWeekStart(newGraphWeekStart);
+  };
 
   const handlePrevDay = () => {
     if (!earliestDate || dayDate > earliestDate) setDayDate(subDays(dayDate, 1));
@@ -46,9 +81,15 @@ export function usePomodoroNavigation(earliestDate, isCompact) {
 
   const handleGraphPrevious = () => {
     if (graphViewType === 'week') {
-      setGraphWeekStart(subWeeks(graphWeekStart, 1));
+      const newGraphWeekStart = subWeeks(graphWeekStart, 1);
+      if (!earliestDate || newGraphWeekStart >= startOfWeek(earliestDate, { weekStartsOn: weekStartDay })) {
+        setGraphWeekStart(newGraphWeekStart);
+      }
     } else {
-      setGraphMonthDate(subMonths(graphMonthDate, 1));
+      const newGraphMonthDate = subMonths(graphMonthDate, 1);
+      if (!earliestDate || newGraphMonthDate >= startOfMonth(earliestDate)) {
+        setGraphMonthDate(newGraphMonthDate);
+      }
     }
   };
 
@@ -80,7 +121,7 @@ export function usePomodoroNavigation(earliestDate, isCompact) {
       if (isThisMonth(graphMonthDate)) return "This Month's Progress";
       return format(graphMonthDate, 'MMMM yyyy');
     }
-  }, [graphViewType, graphWeekStart, graphMonthDate]);
+  }, [graphViewType, graphWeekStart, graphMonthDate, weekStartDay]);
 
   const getDayLabel = useCallback(() => {
     if (isToday(dayDate)) return isCompact ? "Today" : "Today's Stats";
@@ -101,7 +142,7 @@ export function usePomodoroNavigation(earliestDate, isCompact) {
     const year = getWeekYear(weekStart, options);
     const displayYear = year !== new Date().getFullYear();
     return isCompact ? `Week ${weekNum}` : `Week ${weekNum}${displayYear ? `, ${year}` : ""} Stats`;
-  }, [weekStart, isCompact]);
+  }, [weekStart, isCompact, weekStartDay]);
 
   const getMonthLabel = useCallback(() => {
     if (isThisMonth(monthDate)) return isCompact ? "This Month" : "This Month's Stats";
@@ -121,6 +162,8 @@ export function usePomodoroNavigation(earliestDate, isCompact) {
     handlePrevWeek, handleNextWeek, handleReturnToWeek,
     handlePrevMonth, handleNextMonth, handleReturnToMonth,
     handleGraphPrevious, handleGraphNext, handleGraphReturnToCurrent,
-    getGraphTitle, getDayLabel, getWeekLabel, getMonthLabel
+    getGraphTitle, getDayLabel, getWeekLabel, getMonthLabel,
+    updateWeekStartDay: updateWeekStartDayAndRefresh,
+    setEarliestDate // Expose a setter for the earliest date
   };
 }

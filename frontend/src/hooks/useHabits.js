@@ -21,8 +21,11 @@ export const useHabits = (refreshSequences) => {
                 date
             });
         },
-        onSuccess: () => {
+        onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['sequences'] });
+            // Invalidate cumulative progress for the specific habit
+            queryClient.invalidateQueries({ queryKey: ['cumulativeProgress', variables.habitId] });
+            // Also invalidate all cumulative progress queries as fallback
             queryClient.invalidateQueries({ queryKey: ['cumulativeProgress'] });
         },
         onError: (error) => {

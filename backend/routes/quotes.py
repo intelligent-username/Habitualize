@@ -10,7 +10,8 @@ def quote_of_the_day():
     return jsonify(quote)
 
 
-# TODO: IMPLEMENT A LOADING SCREEN SO THIS ROUTE IS USEFUL
+# NOT USED, But if I create a loading page, will be used.
+# Probably won't need a loading page b/c the app is so fast.
 @quotes_bp.route('/api/loading-quote', methods=['GET'])
 def loading_quote():
     quote = get_quote_of_the_day()

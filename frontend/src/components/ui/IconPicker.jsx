@@ -5,21 +5,17 @@ import Icon from './Icon';
 const iconModules = import.meta.glob('/public/icons/*.svg');
 
 const IconPicker = ({ onSelect, selectedIcon }) => {
-  console.log('[IconPicker] Component rendering with selectedIcon:', selectedIcon);
   const [icons, setIcons] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    console.log('[IconPicker] useEffect - loading icons');
     // The keys of iconModules are the paths to the icons
     // e.g., '/public/icons/activity.svg'
     const iconNames = Object.keys(iconModules).map(path => path.split('/').pop());
-    console.log('[IconPicker] Found icons:', iconNames.length, 'icons');
     setIcons(iconNames);
   }, []);
 
   const handleSelect = (icon) => {
-    console.log('[IconPicker] Icon selected:', icon);
     onSelect(icon);
     setIsOpen(false);
   };

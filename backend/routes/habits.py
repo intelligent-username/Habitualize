@@ -24,15 +24,30 @@ def add_habit():
         data['icon'] = get_default_habit_icon()
     
     vals = extract_data(data, columns)
-    # Validation: Only allow positive numbers for counter, cumulative, and total habits
+    
+    # Validation: Only allow positive numbers for counter and total habits
+    # Cumulative habits are validated separately
     habit_type = data.get('type', '').lower()
     target_value = data.get('target_value', 1)
-    cumulative_goal = data.get('cumulative_goal', 1)
-    if habit_type in ('counter', 'cumulative', 'total'):
-        if (isinstance(target_value, (int, float)) and target_value <= 0) or (isinstance(cumulative_goal, (int, float)) and cumulative_goal <= 0):
-            return jsonify({"error": "'Counting' habits must have positive target and goal values."}), 400
+    cumulative_goal = data.get('cumulative_goal')
+    
+    # Check if this is a cumulative habit
+    is_cumulative_habit = cumulative_goal is not None
+    
+    if is_cumulative_habit:
+        # Validate cumulative habit
+        if not isinstance(cumulative_goal, (int, float)) or cumulative_goal <= 0:
+            return jsonify({"error": "Cumulative habits must have a positive goal value."}), 400
+        cumulative_period = data.get('cumulative_period', '').strip()
+        if not cumulative_period or cumulative_period not in ['day', 'week', 'weekly', 'month', 'monthly']:
+            return jsonify({"error": "Cumulative habits must have a valid period (day, week, weekly, month, or monthly)."}), 400
+    elif habit_type in ('counter', 'total'):
+        # Validate counter/total habits
+        if isinstance(target_value, (int, float)) and target_value <= 0:
+            return jsonify({"error": "Counter and total habits must have positive target values."}), 400
+    
     # Add date_created
-    final_vals = (vals[0], vals[1], vals[2], vals[3], vals[4], get_today(), vals[5], vals[6], vals[7], vals[8]) # NOTE: if this order ever changes, gotta update query!!
+    final_vals = (vals[0], vals[1], vals[2], vals[3], vals[4], get_today(), vals[5], vals[6], vals[7], vals[8])
     habit_id = run_query(MAKE_HABIT, params=final_vals)
     
     return jsonify({"id": habit_id, "message": "New habit added successfully"}), 201
@@ -53,7 +68,8 @@ def get_habit_history(habit_id):
 
 @habits_bp.route('/<int:habit_id>/cumulative-progress', methods=['GET'])
 def get_cumulative_progress(habit_id):
-    progress_details = get_cumulative_progress_details(habit_id)
+    date = request.args.get('date') or get_today()
+    progress_details = get_cumulative_progress_details(habit_id, date)
 
     if not progress_details:
         return jsonify({"error": "This habit does not have a valid cumulative goal or period."}), 404
@@ -69,18 +85,24 @@ def toggle_habit_completion(habit_id):
     completed = int(data.get('completed', 0))
     value = data.get('value', 0)
     
-    # Fetch habit type
     habit_details = run_query(FETCH_TYPE_AND_CUMULATIVE, params=(habit_id,), fetch='one')
-    habit_type = habit_details['type'] if habit_details else get_default_habit_type()
-    cumulative = habit_details['cumulative'] if habit_details else 0
+    if not habit_details:
+        return jsonify({"error": "Habit not found."}), 404
     
-    # Only allow positive values for counter, cumulative, and total habits when completing (completed=1)
-    # Allow zero/negative values when unchecking (completed=0) to enable deletion of history entries
-    # Make sure to fix cumulative goals time framing bug
-    if habit_type in ('counter', 'cumulative', 'total') or cumulative:
-        if completed == 1 and isinstance(value, (int, float)) and value <= 0:
-            return jsonify({"error": "Value must be a positive number for counter, cumulative, or total habits."}), 400
+    habit_type = habit_details['type']
+    is_cumulative_habit = habit_details['cumulative_goal'] is not None
     
+    # Validation based on habit type
+    if is_cumulative_habit:
+        # Cumulative habits: allow any numeric value (positive for increment, negative for decrement)
+        if not isinstance(value, (int, float)):
+            return jsonify({"error": "Value must be a number for cumulative habits."}), 400
+    elif habit_type in ('counter', 'total'):
+        # Counter/total habits: only allow positive values when completing
+        if completed == 1 and (not isinstance(value, (int, float)) or value <= 0):
+            return jsonify({"error": "Value must be a positive number for counter and total habits."}), 400
+    
+    # Process the completion update
     result, status_code = update_habit_completion_status(habit_id, date, completed, value)
     return jsonify(result), status_code
 
