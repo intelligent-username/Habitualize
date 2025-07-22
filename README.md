@@ -1,5 +1,7 @@
 # Habitualize
 
+<img src="frontend/public/logo.svg" alt="Logo" width="128" height="128">
+
 ## "You are what you repeatedly do. Excellence, then, is not an act, but a habit."
 
 – Aristotle
