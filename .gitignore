@@ -3,8 +3,8 @@ node_modules/
 misc/
 __pycache__/
 copies/
+target/
 
-*.db
 *.pyc
 *.pyo
 *test*
@@ -34,7 +34,6 @@ dist-ssr
 *.sw?
 
 migrations.py
-raw_quotes.txt
 gitlog.txt
 *cleanup*
 *fix*

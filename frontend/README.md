@@ -64,13 +64,13 @@ The development server will start at [http://localhost:3000](http://localhost:30
 Create a `.env` file in the frontend directory:
 
 ```env
-# Backend API URL (optional - defaults to http://127.0.0.1:5000)
-VITE_API_BASE_URL=http://localhost:5000
+# Backend API URL (optional - defaults to http://127.0.0.1:33333)
+VITE_API_BASE_URL=http://localhost:33333
 ```
 
 ### Backend Integration
 
-The frontend expects the backend to be running on `http://localhost:5000`.
+The frontend expects the backend to be running on `http://localhost:33333`.
 Key API endpoints used:
 
 - Categories: `/categories`

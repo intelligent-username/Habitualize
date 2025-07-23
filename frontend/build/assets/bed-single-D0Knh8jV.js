@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%20class='lucide%20lucide-bed-single-icon%20lucide-bed-single'%3e%3cpath%20d='M3%2020v-8a2%202%200%200%201%202-2h14a2%202%200%200%201%202%202v8'/%3e%3cpath%20d='M5%2010V6a2%202%200%200%201%202-2h10a2%202%200%200%201%202%202v4'/%3e%3cpath%20d='M3%2018h18'/%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=bed-single-D0Knh8jV.js.map

@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%20class='feather%20feather-thumbs-up'%3e%3cpath%20d='M14%209V5a3%203%200%200%200-3-3l-4%209v11h11.28a2%202%200%200%200%202-1.7l1.38-9a2%202%200%200%200-2-2.3zM7%2022H4a2%202%200%200%201-2-2v-7a2%202%200%200%201%202-2h3'%3e%3c/path%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=thumbs-up-DKt2WBPr.js.map

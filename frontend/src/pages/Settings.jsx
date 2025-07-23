@@ -14,7 +14,6 @@ import DataSection from '../components/pages/settings/DataSection.jsx';
 import '../styles/settings.css';
 
 const SettingsPage = () => {
-  // console.log('[SettingsPage] Component rendering');
   
   const { 
     settings, 
@@ -32,7 +31,6 @@ const SettingsPage = () => {
   
   const { categories, isLoading: categoriesLoading } = useCategories();
   
-  // console.log('[SettingsPage] Hook results - settings:', settings, 'categories:', categories, 'settingsLoading:', settingsLoading, 'categoriesLoading:', categoriesLoading);
   
   // Simple initial state - will be populated from backend
   const [formData, setFormData] = useState({
@@ -61,7 +59,6 @@ const SettingsPage = () => {
   // Apply theme immediately when it changes
   useEffect(() => {
     if (formData.theme) {
-      // console.log(`[SettingsPage] Applying theme: ${formData.theme}`);
       // This would actually apply the theme in a real implementation
       // For now, just a placeholder for the future theme implementation
     }
@@ -70,13 +67,11 @@ const SettingsPage = () => {
   // Load settings from backend ONCE - don't replace state, just populate missing values
   useEffect(() => {
     if (settings && settings.length > 0) {
-      // console.log('[SettingsPage] Loading settings from backend:', settings);
       const updates = {};
       let notifSettings = null;
       settings.forEach(setting => {
         const key = setting.key.toLowerCase();
         let value = setting.value;
-        // console.log(`[SettingsPage] Processing setting: ${setting.key} = ${setting.value} (type: ${setting.setting_type})`);
         
         if (key === 'notification_settings') {
           notifSettings = JSON.parse(value);
@@ -90,12 +85,9 @@ const SettingsPage = () => {
           : key === 'filter_completed_to_bottom' ? 'filterCompletedToBottom'
           : key;
         updates[frontendKey] = value;
-        // console.log(`[SettingsPage] Mapped ${key} -> ${frontendKey} = ${value}`);
       });
-      // console.log('[SettingsPage] Applying updates:', updates);
       setFormData(prev => ({ ...prev, ...updates }));
       if (notifSettings) {
-        // console.log('[SettingsPage] Applying notification settings:', notifSettings);
         setNotificationSettings(notifSettings);
       } else {
         // Fallback to default notification settings if not found
@@ -107,7 +99,6 @@ const SettingsPage = () => {
           "endTime": "22:00",
           "times": ["09:00", "18:00"]
         };
-        // console.log('[SettingsPage] Using default notification settings');
         setNotificationSettings(defaultNotificationSettings);
       }
     }
@@ -115,14 +106,11 @@ const SettingsPage = () => {
 
   // Only update backend if value actually changed
   const handleInputChange = (key, value) => {
-    // console.log(`[SettingsPage] handleInputChange called - key: ${key}, value: ${value}, current: ${formData[key]}`);
     
     if (formData[key] === value) {
-      // console.log(`[SettingsPage] Value unchanged, skipping update`);
       return; // Don't update if same value
     }
     
-    // console.log(`[SettingsPage] Updating state and backend for ${key}`);
     setFormData(prev => ({ ...prev, [key]: value }));
     
     // Map to backend key
@@ -131,7 +119,6 @@ const SettingsPage = () => {
       : key;
     
     const settingValue = typeof value === 'boolean' ? String(value) : value;
-    // console.log(`[SettingsPage] Sending to backend - key: ${backendKey}, value: ${settingValue}`);
     updateSettings({ [backendKey]: settingValue });
   };
 
@@ -179,7 +166,6 @@ const SettingsPage = () => {
   };
 
   if (settingsLoading || categoriesLoading || !notificationSettings) {
-    // console.log('[SettingsPage] Still loading - settingsLoading:', settingsLoading, 'categoriesLoading:', categoriesLoading, 'notificationSettings', notificationSettings);
     return (
       <div className="settings-container">
         <div className="settings-content-wrapper">
@@ -194,7 +180,6 @@ const SettingsPage = () => {
     );
   }
 
-  // console.log('[SettingsPage] Rendering form with formData:', formData);
 
   return (
     <div className="settings-container">

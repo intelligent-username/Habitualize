@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20fill='none'%20viewBox='0%200%2024%2024'%20stroke-width='1.5'%20stroke='currentColor'%20class='size-6'%3e%3cpath%20stroke-linecap='round'%20stroke-linejoin='round'%20d='M2.25%2015a4.5%204.5%200%200%200%204.5%204.5H18a3.75%203.75%200%200%200%201.332-7.257%203%203%200%200%200-3.758-3.848%205.25%205.25%200%200%200-10.233%202.33A4.502%204.502%200%200%200%202.25%2015Z'%20/%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=cloud-B0h4aSxn.js.map

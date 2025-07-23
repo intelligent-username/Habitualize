@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%20class='feather%20feather-book-open'%3e%3cpath%20d='M2%203h6a4%204%200%200%201%204%204v14a3%203%200%200%200-3-3H2z'%3e%3c/path%3e%3cpath%20d='M22%203h-6a4%204%200%200%200-4%204v14a3%203%200%200%201%203-3h7z'%3e%3c/path%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=book-open-1b9-r-tS.js.map

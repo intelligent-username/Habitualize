@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%20class='feather%20feather-edit-3'%3e%3cpath%20d='M12%2020h9'%3e%3c/path%3e%3cpath%20d='M16.5%203.5a2.121%202.121%200%200%201%203%203L7%2019l-4%201%201-4L16.5%203.5z'%3e%3c/path%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=edit-3-CeajtPDl.js.map

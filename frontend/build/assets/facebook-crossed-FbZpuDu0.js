@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3e%3c!--%20Facebook%20logo%20path%20--%3e%3cpath%20d='M18%202h-3a5%205%200%200%200-5%205v3H7v4h3v8h4v-8h3l1-4h-4V7a1%201%200%200%201%201-1h3z'/%3e%3c!--%20Diagonal%20'cross-out'%20line%20--%3e%3cline%20x1='2'%20y1='2'%20x2='22'%20y2='22'%20/%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=facebook-crossed-FbZpuDu0.js.map

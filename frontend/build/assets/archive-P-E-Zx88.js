@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%20class='feather%20feather-archive'%3e%3cpolyline%20points='21%208%2021%2021%203%2021%203%208'%3e%3c/polyline%3e%3crect%20x='1'%20y='3'%20width='22'%20height='5'%3e%3c/rect%3e%3cline%20x1='10'%20y1='12'%20x2='14'%20y2='12'%3e%3c/line%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=archive-P-E-Zx88.js.map

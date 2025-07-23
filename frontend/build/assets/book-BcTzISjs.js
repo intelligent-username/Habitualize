@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%20class='feather%20feather-book'%3e%3cpath%20d='M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20'%3e%3c/path%3e%3cpath%20d='M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z'%3e%3c/path%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=book-BcTzISjs.js.map

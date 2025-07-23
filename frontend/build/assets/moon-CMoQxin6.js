@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%20class='feather%20feather-moon'%3e%3cpath%20d='M21%2012.79A9%209%200%201%201%2011.21%203%207%207%200%200%200%2021%2012.79z'%3e%3c/path%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=moon-CMoQxin6.js.map

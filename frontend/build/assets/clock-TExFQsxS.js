@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20fill='none'%20viewBox='0%200%2024%2024'%20stroke-width='2'%20stroke='currentColor'%20class='size-6'%3e%3cpath%20stroke-linecap='round'%20stroke-linejoin='round'%20d='M12%206v6h4.5m4.5%200a9%209%200%201%201-18%200%209%209%200%200%201%2018%200Z'%20/%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=clock-TExFQsxS.js.map

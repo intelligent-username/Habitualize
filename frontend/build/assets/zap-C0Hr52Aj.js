@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%20class='feather%20feather-zap'%3e%3cpolygon%20points='13%202%203%2014%2012%2014%2011%2022%2021%2010%2012%2010%2013%202'%3e%3c/polygon%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=zap-C0Hr52Aj.js.map

@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%20class='feather%20feather-flag'%3e%3cpath%20d='M4%2015s1-1%204-1%205%202%208%202%204-1%204-1V3s-1%201-4%201-5-2-8-2-4%201-4%201z'%3e%3c/path%3e%3cline%20x1='4'%20y1='22'%20x2='4'%20y2='15'%3e%3c/line%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=flag-DnoQioIU.js.map

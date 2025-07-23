@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20fill='none'%20viewBox='0%200%2024%2024'%20stroke-width='1.5'%20stroke='currentColor'%20class='size-6'%3e%3cpath%20stroke-linecap='round'%20stroke-linejoin='round'%20d='M13.5%2010.5V6.75a4.5%204.5%200%201%201%209%200v3.75M3.75%2021.75h10.5a2.25%202.25%200%200%200%202.25-2.25v-6.75a2.25%202.25%200%200%200-2.25-2.25H3.75a2.25%202.25%200%200%200-2.25%202.25v6.75a2.25%202.25%200%200%200%202.25%202.25Z'%20/%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=unlocked-e6x1r0Gb.js.map

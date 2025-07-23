@@ -1,0 +1,2 @@
+const e="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='currentColor'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%20class='feather%20feather-award'%3e%3ccircle%20cx='12'%20cy='8'%20r='7'%3e%3c/circle%3e%3cpolyline%20points='8.21%2013.89%207%2023%2012%2020%2017%2023%2015.79%2013.88'%3e%3c/polyline%3e%3c/svg%3e";export{e as default};
+//# sourceMappingURL=award-X0QOMb3k.js.map
