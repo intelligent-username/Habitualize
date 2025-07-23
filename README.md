@@ -24,7 +24,23 @@ Habitualize/
 
 ## Quick Start
 
-**Requirements**: Python 3.10+ and Node.js
+### 🚀 One-Click Launch (Windows)
+
+Double-click `launch.bat` or `launch-desktop.bat` to automatically set up and run the app!
+
+### 📱 Desktop App (Recommended)
+
+**Requirements**: Python 3.10+, Node.js 18+, Rust, Visual Studio Build Tools
+
+```bash
+cd frontend
+npm install
+npm run tauri:dev    # Development
+npm run tauri:build  # Production installer
+```
+
+### 🌐 Web App (Manual Setup)
+**Requirements**: Python 3.10+ and Node.js 18+
 
 **Backend** (in `/backend` folder):
 
@@ -40,7 +56,7 @@ npm install
 npm run dev
 ```
 
-Visit `http://localhost:3000` and start building those habits! 🎯
+Visit `http://localhost:33333` and start building those habits! 🎯
 
 ## Features
 
@@ -80,5 +96,17 @@ Visit `http://localhost:3000` and start building those habits! 🎯
 - Offline-ready (your habits don't need WiFi)
 - Clean, distraction-free interface
 - Quote of the day for some wonderful motivation
+
+## 📦 Distribution & Installation
+
+### Desktop App (Tauri)
+
+- **Windows**: `.msi` installer (~15-25MB) (coming soon)
+- **macOS**: `.dmg` package (~20-30MB)  (coming soon)
+- **Linux**: `.AppImage` / `.deb` (~15-25MB) (coming soon)
+
+### For Developers
+
+See `SETUP.md` for detailed build instructions and cross-platform considerations. (COMING SOON)
 
 ---
