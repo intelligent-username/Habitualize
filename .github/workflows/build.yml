@@ -29,15 +29,17 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: ./frontend
 
       - name: Build Windows Installer (.msi)
         run: npm run tauri:build
+        working-directory: ./frontend
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Habitualize_Windows
-          path: src-tauri/target/release/bundle/msi/*.msi
+          path: frontend/src-tauri/target/release/bundle/msi/*.msi
 
   build-macos:
     runs-on: macos-latest
@@ -57,15 +59,17 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: ./frontend
 
       - name: Build macOS Installer (.dmg)
         run: npm run tauri:build
+        working-directory: ./frontend
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Habitualize_macOS
-          path: src-tauri/target/release/bundle/dmg/*.dmg
+          path: frontend/src-tauri/target/release/bundle/dmg/*.dmg
 
   build-linux:
     runs-on: ubuntu-latest
@@ -85,14 +89,16 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: ./frontend
 
       - name: Build Linux Installers (.AppImage and .deb)
         run: npm run tauri:build
+        working-directory: ./frontend
 
       - name: Upload Linux Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Habitualize_Linux
           path: |
-            src-tauri/target/release/bundle/appimage/*.AppImage
-            src-tauri/target/release/bundle/deb/*.deb
+            frontend/src-tauri/target/release/bundle/appimage/*.AppImage
+            frontend/src-tauri/target/release/bundle/deb/*.deb
