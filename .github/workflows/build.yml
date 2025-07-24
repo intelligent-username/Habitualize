@@ -137,6 +137,10 @@ jobs:
             sudo apt-get install -y libwebkit2gtk-4.0-dev || true
           fi
 
+      - name: Build Rust backend
+        run: cargo build --release
+        working-directory: ./frontend/src-tauri
+
       - name: Build Linux Installers (.AppImage and .deb)
         run: npm run tauri build
         working-directory: ./frontend

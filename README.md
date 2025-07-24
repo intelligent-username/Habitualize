@@ -2,8 +2,6 @@
 
 ## Tauri version
 
-- App is complete now, just need to add
-
 <img src="frontend/public/logo.svg" alt="Logo" width="128" height="128">
 
 ## "You are what you repeatedly do. Excellence, then, is not an act, but a habit."
@@ -29,18 +27,28 @@ Finally complete
 
 - **Linux**: `.AppImage` / `.deb`
 
-### 🌐 Web App (Manual Setup)
+### 🌐 Web App (Manual Setup, mostly for Developers)
+
+I recommend running the non-Tauri version for development, it's less of a headache.
 
 **Requirements**: Python 3.10+, Node.js 18+, Rust, Visual Studio Build Tools
 
+**Frontend**
+Run the Tauri production app (in `frontend/` folder):
+
 ```bash
-cd frontend
 npm install
 npm run tauri:dev    # Development
 npm run tauri:build  # Production installer
 ```
 
-**Requirements**: Python 3.10+ and Node.js 18+
+Alternatively, run a generic browser-based app:
+(in `/frontend` folder, separate terminal):
+
+```bash
+npm install
+npm run dev
+```
 
 **Backend** (in `/backend` folder):
 
@@ -49,12 +57,9 @@ pip install -r requirements.txt
 python app.py
 ```
 
-**Frontend** (in `/frontend` folder, separate terminal):
-
-```bash
-npm install
-npm run dev
-```
+- For web/manual dev: run backend and frontend separately.
+- For Tauri dev: just run `npm run tauri:dev`.
+- For production: run `npm run tauri:build`.
 
 Visit `http://localhost:33333` and start building those habits! 🎯
 
