@@ -15,17 +15,15 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies
         run: npm install
@@ -45,17 +43,15 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies
         run: npm install
@@ -72,20 +68,18 @@ jobs:
           path: frontend/src-tauri/target/release/bundle/dmg/*.dmg
 
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies
         run: npm install
@@ -101,12 +95,13 @@ jobs:
             libcairo2-dev \
             libpango1.0-dev \
             libsoup-3.0-dev \
-            libjavascriptcoregtk-4.1-dev || true
-          # Handle missing libwebkit2gtk-4.0-dev
-          if ! sudo apt-get install -y libwebkit2gtk-4.0-dev; then
-            echo "libwebkit2gtk-4.0-dev not found, trying alternative versions..."
-            sudo apt-get install -y libwebkit2gtk-4.0-37-dev || true
-            sudo apt-get install -y libwebkit2gtk-4.0-36-dev || true
+            libjavascriptcoregtk-4.1-dev \
+            libwebkit2gtk-4.1-dev \
+            pkg-config
+          # Fallback to webkit2gtk-4.0 if 4.1 is not available
+          if ! dpkg -l | grep -q libwebkit2gtk-4.1-dev; then
+            echo "webkit2gtk-4.1 not found, trying 4.0 version..."
+            sudo apt-get install -y libwebkit2gtk-4.0-dev || true
           fi
 
       - name: Build Linux Installers (.AppImage and .deb)
