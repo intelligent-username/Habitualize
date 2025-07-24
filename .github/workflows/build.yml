@@ -41,7 +41,7 @@ jobs:
         working-directory: ./frontend/src-tauri
 
       - name: Install WiX Toolset
-        run: choco install wix-toolset --no-progress
+        run: choco install wix-toolset -y --no-progress
 
       - name: Add WiX to PATH
         run: echo "C:\Program Files (x86)\WiX Toolset v3.11\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
