@@ -88,4 +88,4 @@ def health():
 if __name__ == '__main__':
     with app.app_context():
         init_db()
-    app.run(debug=True, port=33333)
+    app.run(debug=False, port=33333)

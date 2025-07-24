@@ -2,7 +2,7 @@
 
 ## Tauri version
 
-- App is complete now, just need to add 
+- App is complete now, just need to add
 
 <img src="frontend/public/logo.svg" alt="Logo" width="128" height="128">
 
@@ -15,24 +15,21 @@
 Track your progress, analyze your patterns, and stay motivated with a clean, intuitive interface that actually gets out of your way.
 Finally complete
 
-## What's Inside
+## Running the App
 
-```md
-Habitualize/
-├── backend/     # Flask API + SQLite
-├── frontend/    # React app
-└── README.md    # You are here
-```
+## Desktop App (quickstart, recommended)
 
-**Tech Stack**: Flask + SQLite backend, React + Vite frontend. Simple, fast, and reliable.
+- **Windows**: `.msi` installer
+  - Click [this button](https://github.com/intelligent-username/Habitualize/releases/download/v1/Habitualize_1.0.0_x64_en-US.msi) to downlaod
+  - Or go to 'Releases' page on this Github repo, navigate to v1.0.0, and install the .msi from there
+  - Will start backend on a separate app terminal. Here you can see the logs. **Do not close this terminal.**
 
-## Quick Start
+- **macOS**: `.dmg` package
+  - 
 
-### 🚀 One-Click Launch (Windows)
+- **Linux**: `.AppImage` / `.deb`
 
-Double-click `launch.bat` or `launch-desktop.bat` to automatically set up and run the app!
-
-### 📱 Desktop App (Recommended)
+### 🌐 Web App (Manual Setup)
 
 **Requirements**: Python 3.10+, Node.js 18+, Rust, Visual Studio Build Tools
 
@@ -42,8 +39,6 @@ npm install
 npm run tauri:dev    # Development
 npm run tauri:build  # Production installer
 ```
-
-### 🌐 Web App (Manual Setup)
 
 **Requirements**: Python 3.10+ and Node.js 18+
 
@@ -102,16 +97,18 @@ Visit `http://localhost:33333` and start building those habits! 🎯
 - Clean, distraction-free interface
 - Quote of the day for some wonderful motivation
 
-## 📦 Distribution & Installation
+## File Structure
 
-### Desktop App (Tauri)
+```md
+Habitualize/
+├── frontend/                   # React app
+├───── src/                     # UI, front end logic 
+├───── src-tauri/
+├──────────────── backend/      # Python (flask) backend
+─── # And a lot of other files
+└── README.md    # You are here
+```
 
-- **Windows**: `.msi` installer (~15-25MB) (coming soon)
-- **macOS**: `.dmg` package (~20-30MB)  (coming soon)
-- **Linux**: `.AppImage` / `.deb` (~15-25MB) (coming soon)
-
-### For Developers
-
-See `SETUP.md` for detailed build instructions and cross-platform considerations. (COMING SOON)
+**Tech Stack**: Flask + SQLite backend, React + Vite frontend. Simple, fast, and reliable.
 
 ---

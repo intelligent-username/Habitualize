@@ -22,12 +22,23 @@ jobs:
         with:
           node-version: 18
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies
         run: npm install
         working-directory: ./frontend
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+        working-directory: ./frontend/src-tauri
 
       - name: Build Windows Installer (.msi)
         run: npm run tauri build
@@ -50,12 +61,23 @@ jobs:
         with:
           node-version: 18
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies
         run: npm install
         working-directory: ./frontend
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install -r backend/requirements.txt
+        working-directory: ./frontend/src-tauri
 
       - name: Build macOS Installer (.dmg)
         run: npm run tauri build
@@ -78,12 +100,23 @@ jobs:
         with:
           node-version: 18
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies
         run: npm install
         working-directory: ./frontend
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install -r backend/requirements.txt
+        working-directory: ./frontend/src-tauri
 
       - name: Install system dependencies
         run: |

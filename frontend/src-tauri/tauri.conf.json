@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Habitualize - Lightning-fast Habit Tracker",
+        "title": "Habitualize",
         "width": 1200,
         "height": 800,
         "minWidth": 800,
@@ -40,11 +40,22 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "longDescription": "A lightning-fast, minimalistic and functional habit tracker. Track your progress, analyze your patterns, and stay motivated with a clean, intuitive interface.",
-    "shortDescription": "Lightning-fast habit tracker",
+    "longDescription": "A lightning-fast, minimalistic and functional habit tracker. Track your progress, analyze your patterns, and stay motivated with a clean, intuitive interface. Make use of the added Pomodoro interface.",
+    "shortDescription": "AL lightning-fast habit tracker",
     "publisher": "Varak Tanashian",
     "resources": [
-      "backend"
-    ]
+      "backend",
+      "scripts"
+    ],
+    "windows": {
+      "wix": {
+        "template": "wix-template.wxs"
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": ["python3", "python3-pip", "python3-venv"]
+      }
+    }
   }
 }
