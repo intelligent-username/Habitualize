@@ -32,7 +32,8 @@
 
     <DirectoryRef Id='APPLICATIONFOLDER'>
       <Component Id='MainExecutable' Guid='12345678-1234-1234-1234-222222222222'>
-        <File Id='MainExe' Source='$(var.CargoTargetBinDir)\$(var.CargoTargetBinDir)\$(var.BinaryName).exe' KeyPath='yes' />
+        <!-- Make sure this file exists in the build output directory -->
+        <File Id='MainExe' Source='$(var.CargoTargetBinDir)\$(var.BinaryName).exe' KeyPath='yes' />
       </Component>
     </DirectoryRef>
 
