@@ -1,112 +1,74 @@
 # Habitualize
 
-<img src="frontend/public/logo.svg" alt="Logo" width="128" height="128">
+![Logo](frontend/public/logo.svg)
 
 ## "You are what you repeatedly do. Excellence, then, is not an act, but a habit."
 
 – Aristotle
 
-### A lightning-fast, minimalistic and functional habit tracker
+### A simple, fast, and functional habit tracker
 
-Track your progress, analyze your patterns, and stay motivated with a clean, intuitive interface that actually gets out of your way.
-Finally complete
+Track your progress, analyze patterns, and stay motivated with a clean, intuitive interface.
 
 ## What's Inside
 
-```md
+```plaintext
 Habitualize/
 ├── backend/     # Flask API + SQLite
 ├── frontend/    # React app
 └── README.md    # You are here
 ```
 
-**Tech Stack**: Flask + SQLite backend, React + Vite frontend. Simple, fast, and reliable.
+**Tech Stack**: Flask + SQLite backend, React + Vite frontend.
 
 ## Quick Start
 
-### 🚀 One-Click Launch (Windows)
+### Backend (API)
 
-Double-click `launch.bat` or `launch-desktop.bat` to automatically set up and run the app!
+1. Navigate to the `backend` folder:
 
-### 📱 Desktop App (Recommended)
+   ```bash
+   cd backend
+   ```
 
-**Requirements**: Python 3.10+, Node.js 18+, Rust, Visual Studio Build Tools
+2. Install dependencies:
 
-```bash
-cd frontend
-npm install
-npm run tauri:dev    # Development
-npm run tauri:build  # Production installer
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 🌐 Web App (Manual Setup)
-**Requirements**: Python 3.10+ and Node.js 18+
+3. Run the server:
 
-**Backend** (in `/backend` folder):
+   ```bash
+   python app.py
+   ```
 
-```bash
-pip install -r requirements.txt
-python app.py
-```
+### Frontend (Web App)
 
-**Frontend** (in `/frontend` folder, separate terminal):
+1. Navigate to the `frontend` folder:
 
-```bash
-npm install
-npm run dev
-```
+   ```bash
+   cd frontend
+   ```
 
-Visit `http://localhost:33333` and start building those habits! 🎯
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+Visit `http://localhost:3333` to start building your habits! 🎯
 
 ## Features
 
-### **Dashboard & Analytics**
-
-- Daily habit tracking with intuitive date navigation
-- Weekly and monthly analytics with beautiful charts
-- Habit consistency tracking and streak counters
-- Export your data for deeper analysis
-
-### **Habit Types**
-
-- **Binary**: Simple done/not done tracking ("Read 20 minutes")
-- **Reverse Binary**: For breaking bad habits ("No social media")
-- **Timer**: Built-in timers for time-based habits ("Meditate 10 minutes")
-- **Counter**: Track repetitions ("50 push-ups", "8 glasses of water")
-- **Entry**: Log numeric values ("Weight", "Hours studied")
-- **Cumulative**: Track progress over custom periods ("Run 10 miles this week")
-
-### **Organization**
-
-- **Categories**: Organize habits by life areas (Health, Work, Personal)
-- **Sequences**: Chain related habits together for powerful routines
-- **Custom Icons**: 50+ icons to personalize your habits, possible more to come later.
-
-### **Pomodoro Timer**🐐🐐
-
-- Integrated focus timer with work/break cycles
-- Session tracking and productivity analytics
-- Custom work and break durations
-- Audio notifications (because who doesn't love a good *ding*?)
-
-### **Quality of Life**
-
-- Dark/Light mode support
-- Mobile-responsive design
-- Offline-ready (your habits don't need WiFi)
-- Clean, distraction-free interface
-- Quote of the day for some wonderful motivation
-
-## 📦 Distribution & Installation
-
-### Desktop App (Tauri)
-
-- **Windows**: `.msi` installer (~15-25MB) (coming soon)
-- **macOS**: `.dmg` package (~20-30MB)  (coming soon)
-- **Linux**: `.AppImage` / `.deb` (~15-25MB) (coming soon)
-
-### For Developers
-
-See `SETUP.md` for detailed build instructions and cross-platform considerations. (COMING SOON)
-
----
+- **Dashboard & Analytics**: Track habits daily, view streaks, and analyze progress.
+- **Habit Types**: Binary, Reverse Binary, Timer, Counter, Entry, and Cumulative.
+- **Organization**: Categories, sequences, and custom icons.
+- **Pomodoro Timer**: Focus timer with productivity tracking.
+- **Quality of Life**: Dark/Light mode, mobile-friendly, offline-ready, and motivational quotes.
