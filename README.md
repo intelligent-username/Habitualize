@@ -2,7 +2,7 @@
 
 ## Tauri version
 
-<img src="frontend/public/logo.svg" alt="Logo" width="128" height="128">
+![Logo](frontend/public/logo200.png)
 
 ## "You are what you repeatedly do. Excellence, then, is not an act, but a habit."
 
@@ -17,15 +17,35 @@ Finally complete
 
 ## Desktop App (quickstart, recommended)
 
-- **Windows**: `.msi` installer
-  - Click [this button](https://github.com/intelligent-username/Habitualize/releases/download/v1/Habitualize_1.0.0_x64_en-US.msi) to downlaod
-  - Or go to 'Releases' page on this Github repo, navigate to v1.0.0, and install the .msi from there
-  - Will start backend on a separate app terminal. Here you can see the logs. **Do not close this terminal.**
+### Windows: `.msi` installer
 
-- **macOS**: `.dmg` package
-  - 
+- Click [this button](https://github.com/intelligent-username/Habitualize/releases/download/v1/Habitualize_1.0.0_x64_en-US.msi) to downlaod
+- Or go to 'Releases' page on this Github repo, navigate to any version, and install the .msi from there
+- Running this MSI file will downlaod the application for you, creating the web app as a native desktop app.
+- Will start backend on a separate app terminal. Here you can see the logs. **Do not close this terminal.**
+- Note: can be improved, streamlined, etc. but am that's for later.
 
-- **Linux**: `.AppImage` / `.deb`
+### macOS: `.dmg` package
+
+- Click [this button](https://github.com/intelligent-username/Habitualize/releases/download/v1/Habitualize_1.0.0_aarch64.dmg)
+- Or navigate to "Releases" page on this repo and pick whichever version you like
+- Run the file to download the app
+
+### Linux Package
+
+`.deb`
+
+- Click [this button](https://github.com/intelligent-username/Habitualize/releases/download/v1/Habitualize_1.0.0_amd64.deb) to install the  .deb installer
+- Or go to the 'Releases' page on this GitHub repo and choose whichever installation
+- Run installer to download the app
+
+`.AppImage`
+
+- Click [this button](https://github.com/intelligent-username/Habitualize/releases/download/v1/Habitualize_1.0.0_amd64.AppImage) to install the .AppImage installer
+- Or go to the 'Releases' page on this GitHub repo and choose whichever installation
+- Run it to downlaod app.
+
+---
 
 ### 🌐 Web App (Manual Setup, mostly for Developers)
 
