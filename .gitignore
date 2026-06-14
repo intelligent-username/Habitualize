@@ -1,3 +1,7 @@
+CHECKLIST.md
+NOTES.md
+test.md
+
 node_modules/
 .vscode/*
 misc/
@@ -37,3 +41,5 @@ migrations.py
 gitlog.txt
 *cleanup*
 *fix*
+.env
+*.db
